@@ -4,7 +4,7 @@
 #include <vector>
 #include <mutex>
 
-#include "device/vr/openvr/test/out.h"
+#include "openvr/test/out.h"
 
 /* template<typename T>
 class staticvector {

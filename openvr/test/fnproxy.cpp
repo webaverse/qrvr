@@ -1,6 +1,6 @@
 #include <string>
 
-#include "device/vr/openvr/test/fnproxy.h"
+#include "openvr/test/fnproxy.h"
 
 #include <windows.h>
 

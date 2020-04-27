@@ -1,4 +1,4 @@
-#include "device/vr/openvr/test/out.h"
+#include "openvr/test/out.h"
 #include <iostream>
 
 std::ostream &getOut() {

@@ -1,4 +1,4 @@
-#include "device/vr/openvr/test/matrix.h"
+#include "openvr/test/matrix.h"
 
 float vectorLength(float x, float y, float z) {
   return std::sqrt(x*x + y*y + z*z);

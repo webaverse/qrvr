@@ -2,7 +2,7 @@
 #define _openvr_matrix_h_
 
 #include "third_party/openvr/src/headers/openvr.h"
-#include "device/vr/openvr/test/out.h"
+#include "openvr/test/out.h"
 
 float vectorLength(float x, float y, float z);
 void setPoseMatrix(float *dstMatrixArray, const vr::HmdMatrix44_t &srcMatrix);
