@@ -1,8 +1,8 @@
 #include "qr.h"
 #include "matrix.h"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+// #define STB_IMAGE_WRITE_IMPLEMENTATION
+// #include "stb_image_write.h"
 
 void CreateDevice(ID3D11Device5 **device, ID3D11DeviceContext4 **context, IDXGISwapChain **swapChain) {
   int32_t adapterIndex;
@@ -286,17 +286,10 @@ QrEngine::QrEngine() {
         cv::Mat inputImage2;
         cv::cvtColor(inputImage, inputImage2, cv::COLOR_RGBA2GRAY);
         
-        std::string s("frame");
+        /* std::string s("frame");
         s += std::to_string(++frameId);
         s += ".png";
-        stbi_write_png(s.c_str(), colorBufferDesc.Width, colorBufferDesc.Height, 1, inputImage2.ptr(), colorBufferDesc.Width);
-
-        // imwrite((std::string(R"EOF(C:\Users\avaer\Documents\GitHub\overlay\tmp\)EOF") + std::to_string(++ssId) + std::string(".png")).c_str(), inputImage);
-
-        // Mat inputImage2;
-        // cvtColor(inputImage, inputImage2, COLOR_BGRA2GRAY);
-
-        // getOut() << "thread 8 " << (int)inputImage2.ptr()[0] << " " << (int)inputImage2.ptr()[1] << " " << (int)inputImage2.ptr()[2] << " " << (int)inputImage2.ptr()[3] << std::endl;
+        stbi_write_png(s.c_str(), colorBufferDesc.Width, colorBufferDesc.Height, 1, inputImage2.ptr(), colorBufferDesc.Width); */
 
         cv::Mat bbox, rectifiedImage;
         
