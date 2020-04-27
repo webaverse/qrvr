@@ -14,6 +14,13 @@
   "author": "",
   "license": "ISC",
   "gypfile": true,
+  "files": [
+    "package.json",
+    "index.js",
+    "index.html",
+    "node_modules/",
+    "build/"
+  ],
   "dependencies": {
     "express": "^4.17.1",
     "nan": "^2.14.1",
