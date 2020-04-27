@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+<body>
+<script>
+const s = new WebSocket('ws://' + window.location.host);
+s.onmessage = e => {
+  const m = JSON.parse(e.data);
+  console.log(m);
+};
+</script>
+</body>
+</html>

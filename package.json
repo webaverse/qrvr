@@ -1,0 +1,22 @@
+{
+  "name": "vr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "node-gyp rebuild"
+  },
+  "author": "",
+  "license": "ISC",
+  "gypfile": true,
+  "dependencies": {
+    "express": "^4.17.1",
+    "nan": "^2.14.1",
+    "ws": "^7.2.5"
+  }
+}
