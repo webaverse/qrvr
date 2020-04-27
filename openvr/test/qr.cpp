@@ -21,14 +21,14 @@ void CreateDevice(ID3D11Device5 **device, ID3D11DeviceContext4 **context, IDXGIS
   }
   dxgi_factory->EnumAdapters1(adapterIndex, &adapter);
 
-  getOut() << "create device " << adapterIndex << " " << (void *)adapter << std::endl;
+  // getOut() << "create device " << adapterIndex << " " << (void *)adapter << std::endl;
 
   for (unsigned int i = 0;; i++) {
     hr = dxgi_factory->EnumAdapters1(i, &adapter);
     if (SUCCEEDED(hr)) {
       DXGI_ADAPTER_DESC desc;
       adapter->GetDesc(&desc);
-      getOut() << "got adapter desc " << i << (char *)desc.Description << " " << desc.AdapterLuid.HighPart << " " << desc.AdapterLuid.LowPart << std::endl;
+      // getOut() << "got adapter desc " << i << (char *)desc.Description << " " << desc.AdapterLuid.HighPart << " " << desc.AdapterLuid.LowPart << std::endl;
     } else {
       break;
     }
@@ -48,7 +48,7 @@ void CreateDevice(ID3D11Device5 **device, ID3D11DeviceContext4 **context, IDXGIS
     adapter, // pAdapter
     D3D_DRIVER_TYPE_HARDWARE, // DriverType
     NULL, // Software
-    D3D11_CREATE_DEVICE_DEBUG, // Flags
+    0, // D3D11_CREATE_DEVICE_DEBUG, // Flags
     featureLevels, // pFeatureLevels
     ARRAYSIZE(featureLevels), // FeatureLevels
     D3D11_SDK_VERSION, // SDKVersion
@@ -91,7 +91,7 @@ void CreateDevice(ID3D11Device5 **device, ID3D11DeviceContext4 **context, IDXGIS
     
     DXGI_ADAPTER_DESC desc;
     hr = pDXGIAdapter->GetDesc(&desc);
-    getOut() << "got desc " << (char *)desc.Description << " " << desc.AdapterLuid.HighPart << " " << desc.AdapterLuid.LowPart << std::endl;
+    // getOut() << "got desc " << (char *)desc.Description << " " << desc.AdapterLuid.HighPart << " " << desc.AdapterLuid.LowPart << std::endl;
   } else {
     getOut() << "create dx device failed " << (void *)hr << std::endl;
     abort();
@@ -117,18 +117,18 @@ vr::HmdMatrix44_t GetProjectionMatrix() {
 
 int frameId = 0;
 QrEngine::QrEngine() {
-  getOut() << "qr cons 0" << std::endl;
+  // getOut() << "qr cons 0" << std::endl;
   vr::HmdError hmdError;
   vr::VR_Init(&hmdError, vr::EVRApplicationType::VRApplication_Overlay);
-  getOut() << "qr cons 1 " << hmdError << std::endl;
+  // getOut() << "qr cons 1 " << hmdError << std::endl;
   CreateDevice(&qrDevice, &qrContext, &qrSwapChain);
-  getOut() << "qr cons 2" << std::endl;
+  // getOut() << "qr cons 2" << std::endl;
   
   HRESULT hr = qrDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&qrInfoQueue);
   if (SUCCEEDED(hr)) {
     qrInfoQueue->PushEmptyStorageFilter();
   } else {
-    getOut() << "info queue query failed" << std::endl;
+    // getOut() << "info queue query failed" << std::endl;
     // abort();
   }
 
@@ -136,7 +136,7 @@ QrEngine::QrEngine() {
     cv::QRCodeDetector qrDecoder;
     
     for (;;) {
-      getOut() << "thread 1" << std::endl;
+      // getOut() << "thread 1" << std::endl;
       
       /* vr::TrackedDevicePose_t rRenderPoses[vr::k_unMaxTrackedDeviceCount];
       if (openvr_->GetCompositor()->CanRenderScene() == false)
@@ -154,13 +154,13 @@ QrEngine::QrEngine() {
         m_lastFrameIndex = newFrameIndex;
       }
       
-      getOut() << "thread 2" << std::endl;
+      // getOut() << "thread 2" << std::endl;
 
       // read mirror texture
       ID3D11ShaderResourceView *pD3D11ShaderResourceView = nullptr;
       vr::EVRCompositorError err = vr::VRCompositor()->GetMirrorTextureD3D11(vr::EVREye::Eye_Left, qrDevice, &(void *)pD3D11ShaderResourceView);
       
-      getOut() << "thread 3 " << err << " " << (void *)pD3D11ShaderResourceView << std::endl;
+      // getOut() << "thread 3 " << err << " " << (void *)pD3D11ShaderResourceView << std::endl;
 
       if (!err) {
         HRESULT hr;
@@ -171,7 +171,7 @@ QrEngine::QrEngine() {
         ID3D11Texture2D *colorTex = nullptr;
         hr = res->QueryInterface(&colorTex);
         
-        getOut() << "thread 4 " << hr << " " << (void *)colorTex << std::endl;
+        // getOut() << "thread 4 " << hr << " " << (void *)colorTex << std::endl;
         
         D3D11_TEXTURE2D_DESC desc;
         colorTex->GetDesc(&desc);
@@ -179,7 +179,7 @@ QrEngine::QrEngine() {
         InfoQueueLog();
 
         if (!colorReadTex || desc.Width != colorBufferDesc.Width || desc.Height != colorBufferDesc.Height) {
-          getOut() << "thread 5" << std::endl;
+          // getOut() << "thread 5" << std::endl;
           
           colorBufferDesc = desc;
 
@@ -194,18 +194,18 @@ QrEngine::QrEngine() {
             &colorReadTex
           );
           if (FAILED(hr)) {
-            getOut() << "failed to create color read texture: " << (void *)hr << std::endl;
+            // getOut() << "failed to create color read texture: " << (void *)hr << std::endl;
             // this->pvrcompositor->InfoQueueLog();
             InfoQueueLog();
             abort();
           }
         }
         
-        getOut() << "thread 6" << std::endl;
+        // getOut() << "thread 6" << std::endl;
         
         InfoQueueLog();
         
-        getOut() << "thread 7" << std::endl;
+        // getOut() << "thread 7" << std::endl;
 
         qrContext->CopyResource(
           colorReadTex,
@@ -214,7 +214,7 @@ QrEngine::QrEngine() {
         
         InfoQueueLog();
         
-        getOut() << "thread 8" << std::endl;
+        // getOut() << "thread 8" << std::endl;
 
         uint32_t eyeWidth = desc.Width;
         uint32_t eyeHeight = desc.Height;
@@ -233,11 +233,11 @@ QrEngine::QrEngine() {
         setPoseMatrix(projectionMatrix, projectionMatrixHmd);
         getMatrixInverse(projectionMatrix, projectionMatrixInverse);
 
-        getOut() << "thread 9" << std::endl;
+        // getOut() << "thread 9" << std::endl;
 
         cv::Mat inputImage(colorBufferDesc.Height, colorBufferDesc.Width, CV_8UC4);
         
-        getOut() << "thread 10" << std::endl;
+        // getOut() << "thread 10" << std::endl;
         
         D3D11_MAPPED_SUBRESOURCE resource;
         hr = qrContext->Map(
@@ -253,7 +253,7 @@ QrEngine::QrEngine() {
           abort();
         }
 
-        getOut() << "thread 11" << std::endl;
+        // getOut() << "thread 11" << std::endl;
 
         /* char cwdBuf[MAX_PATH];
         if (!GetCurrentDirectory(sizeof(cwdBuf), cwdBuf)) {
@@ -277,11 +277,11 @@ QrEngine::QrEngine() {
         }
         // memcpy(inputImage.ptr(), subresource.pData, colorBufferDesc.Width * colorBufferDesc.Height * 4);
 
-        getOut() << "thread 12" << std::endl;
+        // getOut() << "thread 12" << std::endl;
 
         qrContext->Unmap(colorReadTex, 0);
         
-        getOut() << "thread 13" << std::endl;
+        // getOut() << "thread 13" << std::endl;
         
         cv::Mat inputImage2;
         cv::cvtColor(inputImage, inputImage2, cv::COLOR_RGBA2GRAY);
@@ -293,32 +293,32 @@ QrEngine::QrEngine() {
 
         cv::Mat bbox, rectifiedImage;
         
-        getOut() << "thread 14" << std::endl;
+        // getOut() << "thread 14" << std::endl;
 
         std::string data;
-        try
-        {
+        /* try
+        { */
           data = qrDecoder.detectAndDecode(inputImage2, bbox, rectifiedImage);
-        }
+        /* }
         catch( cv::Exception& e )
         {
             const char* err_msg = e.what();
-            getOut() << "exception caught: " << err_msg << std::endl;
-        }
+            // getOut() << "exception caught: " << err_msg << std::endl;
+        } */
         
 
-        getOut() << "thread 15 " << data.length() << std::endl;
+        // getOut() << "thread 15 " << data.length() << std::endl;
 
         {
           std::lock_guard<Mutex> lock(mut);
 
           if (data.length() > 0) {
-            getOut() << "Decoded QR code: " << data << " " <<
+            /* getOut() << "Decoded QR code: " << data << " " <<
               bbox.at<cv::Point2f>(0).x << " " << bbox.at<cv::Point2f>(0).y << " " <<
               bbox.at<cv::Point2f>(1).x << " " << bbox.at<cv::Point2f>(1).y << " " <<
               bbox.at<cv::Point2f>(2).x << " " << bbox.at<cv::Point2f>(2).y << " " <<
               bbox.at<cv::Point2f>(3).x << " " << bbox.at<cv::Point2f>(3).y << " " <<
-              std::endl;
+              std::endl; */
 
             qrCodes.resize(1);
             QrCode &qrCode = qrCodes[0];
@@ -332,25 +332,25 @@ QrEngine::QrEngine() {
                 0.0f,
                 1.0f,
               };
-              getOut() << "points 1: " << data << " " <<
+              /* getOut() << "points 1: " << data << " " <<
                 worldPoint[0] << " " << worldPoint[1] << " " << worldPoint[2] <<
-                std::endl;
+                std::endl; */
               applyVector4Matrix(worldPoint, projectionMatrixInverse);
-              getOut() << "points 2: " << data << " " <<
+              /* getOut() << "points 2: " << data << " " <<
                 worldPoint[0] << " " << worldPoint[1] << " " << worldPoint[2] <<
-                std::endl;
+                std::endl; */
               perspectiveDivideVector(worldPoint);
-              getOut() << "points 3: " << data << " " <<
+              /* getOut() << "points 3: " << data << " " <<
                 worldPoint[0] << " " << worldPoint[1] << " " << worldPoint[2] <<
-                std::endl;
+                std::endl; */
               applyVector4Matrix(worldPoint, viewMatrixInverse);
-              getOut() << "points 4: " << data << " " <<
+              /* getOut() << "points 4: " << data << " " <<
                 worldPoint[0] << " " << worldPoint[1] << " " << worldPoint[2] <<
-                std::endl;
+                std::endl; */
               applyVector4Matrix(worldPoint, stageMatrixInverse);
-              getOut() << "points 5: " << data << " " <<
+              /* getOut() << "points 5: " << data << " " <<
                 worldPoint[0] << " " << worldPoint[1] << " " << worldPoint[2] <<
-                std::endl;
+                std::endl; */
 
               qrCode.points[i*3] = worldPoint[0];
               qrCode.points[i*3+1] = worldPoint[1];
