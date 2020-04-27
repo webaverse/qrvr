@@ -13,7 +13,6 @@
   },
   "author": "",
   "license": "ISC",
-  "gypfile": true,
   "files": [
     "package.json",
     "index.js",
