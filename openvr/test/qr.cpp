@@ -347,7 +347,7 @@ QrEngine::QrEngine() {
               /* getOut() << "points 4: " << data << " " <<
                 worldPoint[0] << " " << worldPoint[1] << " " << worldPoint[2] <<
                 std::endl; */
-              applyVector4Matrix(worldPoint, stageMatrixInverse);
+              // applyVector4Matrix(worldPoint, stageMatrixInverse);
               /* getOut() << "points 5: " << data << " " <<
                 worldPoint[0] << " " << worldPoint[1] << " " << worldPoint[2] <<
                 std::endl; */
