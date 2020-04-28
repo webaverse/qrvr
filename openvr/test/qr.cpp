@@ -296,15 +296,15 @@ QrEngine::QrEngine() {
         // getOut() << "thread 14" << std::endl;
 
         std::string data;
-        /* try
-        { */
+        try
+        {
           data = qrDecoder.detectAndDecode(inputImage2, bbox, rectifiedImage);
-        /* }
+        }
         catch( cv::Exception& e )
         {
             const char* err_msg = e.what();
-            // getOut() << "exception caught: " << err_msg << std::endl;
-        } */
+            getOut() << "exception caught: " << err_msg << std::endl;
+        }
         
 
         // getOut() << "thread 15 " << data.length() << std::endl;
