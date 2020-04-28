@@ -19,7 +19,7 @@ async function start({
       const _recurse = () => {
         if (live) {
           const qrCodes = qr.getQrCodes();
-          console.log('detected QR code', );
+          // console.log('detected QR code', qrCodes);
           s.send(JSON.stringify(qrCodes));
         }
         setTimeout(_recurse);
