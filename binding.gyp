@@ -8,12 +8,22 @@
         './openvr/test/fnproxy.cpp',
         './openvr/test/matrix.cpp',
         './openvr/test/main.cpp',
+        './third_party/zxing-cpp/core/src/*.cpp',
+        './third_party/zxing-cpp/core/src/qrcode/*.cpp',
+        './third_party/zxing-cpp/core/src/oned/*.cpp',
+        './third_party/zxing-cpp/core/src/oned/rss/*.cpp',
+        './third_party/zxing-cpp/core/src/datamatrix/*.cpp',
+        './third_party/zxing-cpp/core/src/aztec/*.cpp',
+        './third_party/zxing-cpp/core/src/maxicode/*.cpp',
+        './third_party/zxing-cpp/core/src/pdf417/*.cpp',
+        './third_party/zxing-cpp/core/src/textcodec/*.cpp',
       ],
       'include_dirs': [
         "<!(node -e \"console.log(require.resolve('nan').slice(0, -16))\")",
         ".",
-        "./third_party/opencv/include",
         "./third_party/openvr/src/headers",
+        "./third_party/zxing-cpp/core/src",
+        "./third_party/zxing-cpp/core/src/qrcode",
       ],
       'library_dirs': [
         './third_party/opencv/x64/vc16/lib',
@@ -24,7 +34,6 @@
         'd3d11.lib',
         'd3dcompiler.lib',
         'dxguid.lib',
-        'opencv_world420.lib',
         'openvr_api.lib',
       ],
       'copies': [
@@ -32,7 +41,6 @@
           'destination': '<(module_root_dir)/build/Release/',
           'files': [
             "./third_party/openvr/src/bin/win64/openvr_api.dll",
-            "./third_party/opencv/x64/vc16/bin/opencv_world420.dll",
           ]
         },
       ],

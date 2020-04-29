@@ -133,8 +133,8 @@ QrEngine::QrEngine() {
   }
 
   std::thread([this]() -> void {
-    auto hints = DecodeHints().setTryHarder(true).setTryRotate(true);
-    QrCodeReader reader(hints);
+    auto hints = ZXing::DecodeHints().setTryHarder(true).setTryRotate(true);
+    ZXing::QRCode::Reader reader(hints);
     
     for (;;) {
       // getOut() << "thread 1" << std::endl;
@@ -239,8 +239,6 @@ QrEngine::QrEngine() {
         getMatrixInverse(projectionMatrix, projectionMatrixInverse);
 
         // getOut() << "thread 9" << std::endl;
-
-        cv::Mat inputImage(colorBufferDesc.Height, colorBufferDesc.Width, CV_8UC4);
         
         // getOut() << "thread 10" << std::endl;
         
@@ -270,10 +268,12 @@ QrEngine::QrEngine() {
         getOut() << "read qr code image 1 " << qrPngPath << std::endl;
         Mat inputImage = imread(qrPngPath, IMREAD_COLOR);
         getOut() << "read qr code image 2" << std::endl; */
+        
+        std::vector<uint8_t> rgbaImg(colorBufferDesc.Width * colorBufferDesc.Height * 4);
 
         UINT lBmpRowPitch = colorBufferDesc.Width * 4;
         BYTE *sptr = reinterpret_cast<BYTE *>(resource.pData);
-        BYTE *dptr = (BYTE *)inputImage.ptr(); // + (lBmpRowPitch * colorBufferDesc.Height) - lBmpRowPitch;
+        BYTE *dptr = (BYTE *)rgbaImg.data();
         for (size_t h = 0; h < colorBufferDesc.Height; ++h) {
           memcpy(dptr, sptr, lBmpRowPitch);
           sptr += resource.RowPitch;
@@ -291,13 +291,13 @@ QrEngine::QrEngine() {
         // cv::Mat inputImage2;
         // cv::cvtColor(inputImage, inputImage2, cv::COLOR_RGBA2GRAY);
 
-        std::shared_ptr<GenericLuminanceSource> luminanceSource(
-          new GenericLuminanceSource(colorBufferDesc.Width, colorBufferDesc.Height, inputImage.ptr(), lBmpRowPitch, 4, 0, 1, 2)
+        std::shared_ptr<ZXing::GenericLuminanceSource> luminanceSource(
+          new ZXing::GenericLuminanceSource(colorBufferDesc.Width, colorBufferDesc.Height, rgbaImg.data(), lBmpRowPitch, 4, 0, 1, 2)
         );
-        std:unique_ptr<HybridBinarizer> binarizer = std::make_unique<HybridBinarizer>(luminanceSource, false);
-        BinaryBitmap &bitmap = *binarizer;
-        Result result = reader.read(bitmap);
-        const std::vector<ResultPoint> &resultPoints = result.resultPoints();
+        std::unique_ptr<ZXing::HybridBinarizer> binarizer = std::make_unique<ZXing::HybridBinarizer>(luminanceSource, false);
+        ZXing::BinaryBitmap &bitmap = *binarizer;
+        ZXing::Result result = reader.decode(bitmap);
+        const std::vector<ZXing::ResultPoint> &resultPoints = result.resultPoints();
         const std::wstring &wText = result.text();
         std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
         std::string data = converter.to_bytes(wText);
@@ -320,7 +320,7 @@ QrEngine::QrEngine() {
             qrCode.data = std::move(data);
             
             for (int i = 0; i < 4; i++) {
-              const ResultPoint &p = resultPoints[i];
+              const ZXing::ResultPoint &p = resultPoints[i];
               float worldPoint[4] = {
                 (p.x()/(float)eyeWidth) * 2.0f - 1.0f,
                 (1.0f-(p.y()/(float)eyeHeight)) * 2.0f - 1.0f,

@@ -2,6 +2,9 @@
 #define _test_qr_h_
 
 #include <stdlib.h>
+#include <locale>
+#include <codecvt>
+
 #include <windows.h>
 #include <wrl.h>
 #include <d3d11_4.h>
@@ -11,11 +14,18 @@
 // #include "device/vr/openvr/test/out.h"
 // #include "device/vr/openvr/test/compositorproxy.h"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/objdetect.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
+// #include <opencv2/core/core.hpp>
+// #include <opencv2/objdetect.hpp>
+// #include <opencv2/imgcodecs.hpp>
+// #include <opencv2/imgproc.hpp>
 // #include <opencv2/features2d.hpp>
+
+#include <QRReader.h>
+#include <DecodeHints.h>
+#include <GenericLuminanceSource.h>
+#include <HybridBinarizer.h>
+#include <Result.h>
+#include <ResultPoint.h>
 
 #include "./fnproxy.h"
 
