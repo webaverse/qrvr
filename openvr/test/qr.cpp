@@ -176,7 +176,7 @@ QrEngine::QrEngine() {
         D3D11_TEXTURE2D_DESC desc;
         colorTex->GetDesc(&desc);
         
-        InfoQueueLog();
+        // InfoQueueLog();
 
         if (!colorReadTex || desc.Width != colorBufferDesc.Width || desc.Height != colorBufferDesc.Height) {
           // getOut() << "thread 5" << std::endl;
@@ -203,7 +203,7 @@ QrEngine::QrEngine() {
         
         // getOut() << "thread 6" << std::endl;
         
-        InfoQueueLog();
+        // sInfoQueueLog();
         
         // getOut() << "thread 7" << std::endl;
 
@@ -212,7 +212,11 @@ QrEngine::QrEngine() {
           colorTex
         );
         
-        InfoQueueLog();
+        // InfoQueueLog();
+
+        colorTex->Release();
+        res->Release();
+        vr::VRCompositor()->ReleaseMirrorTextureD3D11(pD3D11ShaderResourceView);
         
         // getOut() << "thread 8" << std::endl;
 
@@ -365,8 +369,6 @@ QrEngine::QrEngine() {
         // getOut() << "thread 10 " << data.length() << std::endl;
 
         // running = false;
-        
-        colorTex->Release();
       }
     }
   }).detach();
