@@ -1,0 +1,21 @@
+language: cpp
+dist: bionic
+os:
+ - linux
+
+script:
+ - mkdir build && cd build
+ - cmake ../core
+ - make -j10
+ - cd ..
+ - mkdir build-unit && cd build-unit
+ - cmake ../test/unit
+ - make -j10
+ - ./ZXingUnitTest
+ - cd ..
+ - mkdir build-test && cd build-test
+ - cmake -DCMAKE_BUILD_TYPE=Release ../test/blackbox
+ - make -j10
+ - ./ReaderTest ../test/samples
+ - ./WriterTest
+ - ./ReaderTest *.png
