@@ -133,7 +133,8 @@ QrEngine::QrEngine() {
   }
 
   std::thread([this]() -> void {
-    cv::QRCodeDetector qrDecoder;
+    auto hints = DecodeHints().setTryHarder(true).setTryRotate(true);
+    QrCodeReader reader(hints);
     
     for (;;) {
       // getOut() << "thread 1" << std::endl;
@@ -287,29 +288,19 @@ QrEngine::QrEngine() {
         
         // getOut() << "thread 13" << std::endl;
         
-        cv::Mat inputImage2;
-        cv::cvtColor(inputImage, inputImage2, cv::COLOR_RGBA2GRAY);
-        
-        /* std::string s("frame");
-        s += std::to_string(++frameId);
-        s += ".png";
-        stbi_write_png(s.c_str(), colorBufferDesc.Width, colorBufferDesc.Height, 1, inputImage2.ptr(), colorBufferDesc.Width); */
+        // cv::Mat inputImage2;
+        // cv::cvtColor(inputImage, inputImage2, cv::COLOR_RGBA2GRAY);
 
-        cv::Mat bbox, rectifiedImage;
-        
-        // getOut() << "thread 14" << std::endl;
-
-        std::string data;
-        try
-        {
-          data = qrDecoder.detectAndDecode(inputImage2, bbox, rectifiedImage);
-        }
-        catch( cv::Exception& e )
-        {
-            const char* err_msg = e.what();
-            getOut() << "exception caught: " << err_msg << std::endl;
-        }
-        
+        std::shared_ptr<GenericLuminanceSource> luminanceSource(
+          new GenericLuminanceSource(colorBufferDesc.Width, colorBufferDesc.Height, inputImage.ptr(), lBmpRowPitch, 4, 0, 1, 2)
+        );
+        std:unique_ptr<HybridBinarizer> binarizer = std::make_unique<HybridBinarizer>(luminanceSource, false);
+        BinaryBitmap &bitmap = *binarizer;
+        Result result = reader.read(bitmap);
+        const std::vector<ResultPoint> &resultPoints = result.resultPoints();
+        const std::wstring &wText = result.text();
+        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+        std::string data = converter.to_bytes(wText);
 
         // getOut() << "thread 15 " << data.length() << std::endl;
 
@@ -329,10 +320,10 @@ QrEngine::QrEngine() {
             qrCode.data = std::move(data);
             
             for (int i = 0; i < 4; i++) {
-              const cv::Point2f &p = bbox.at<cv::Point2f>(i);
+              const ResultPoint &p = resultPoints[i];
               float worldPoint[4] = {
-                (p.x/(float)eyeWidth) * 2.0f - 1.0f,
-                (1.0f-(p.y/(float)eyeHeight)) * 2.0f - 1.0f,
+                (p.x()/(float)eyeWidth) * 2.0f - 1.0f,
+                (1.0f-(p.y()/(float)eyeHeight)) * 2.0f - 1.0f,
                 0.0f,
                 1.0f,
               };
