@@ -46,6 +46,8 @@ public:
   ID3D11DeviceContext4 *qrContext = nullptr;
   IDXGISwapChain *qrSwapChain = nullptr;
   ID3D11InfoQueue *qrInfoQueue = nullptr;
+  
+  ZXing::QRCode::Reader reader;
 
   Mutex mut;
   Semaphore sem;
