@@ -179,7 +179,7 @@ QrEngine::QrEngine() :
       ID3D11Resource *resLeft = nullptr;
       pD3D11ShaderResourceViewLeft->GetResource(&resLeft);
       ID3D11Resource *resRight = nullptr;
-      pD3D11ShaderResourceViewLeft->GetResource(&resRight);
+      pD3D11ShaderResourceViewRight->GetResource(&resRight);
 
       ID3D11Texture2D *colorTexLeft = nullptr;
       hr = resLeft->QueryInterface(&colorTexLeft);
@@ -264,7 +264,7 @@ QrEngine::QrEngine() :
       multiplyMatrices(viewMatrixHmdInverse, viewMatrixEyeInverseLeft, viewMatrixInverseLeft);
 
       float viewMatrixEyeInverseRight[16];
-      vr::HmdMatrix34_t viewMatrixEyeRight = GetEyeViewMatrix(vr::Eye_Left);
+      vr::HmdMatrix34_t viewMatrixEyeRight = GetEyeViewMatrix(vr::Eye_Right);
       setPoseMatrix(viewMatrixEyeInverseRight, viewMatrixEyeRight);
       float viewMatrixInverseRight[16];
       multiplyMatrices(viewMatrixHmdInverse, viewMatrixEyeInverseRight, viewMatrixInverseRight);
@@ -424,6 +424,10 @@ QrCode QrEngine::getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRi
     float z = zNear + zForward;
     worldPointDot[2] = -z;
     applyVector4Matrix(worldPointDot, viewMatrixInverseLeft);
+    
+    if (i == 0) {
+      getOut() << "get separation " << eyeSeparation << " " << pointSeparation << std::endl;
+    }
 
     qrCode.points[i*3] = worldPointDot[0];
     qrCode.points[i*3+1] = worldPointDot[1];
