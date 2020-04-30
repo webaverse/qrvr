@@ -121,22 +121,33 @@ int frameId = 0;
 QrEngine::QrEngine() :
   reader(ZXing::DecodeHints().setTryHarder(true).setTryRotate(true))
 {
-  // getOut() << "qr cons 0" << std::endl;
-  vr::HmdError hmdError;
-  vr::VR_Init(&hmdError, vr::EVRApplicationType::VRApplication_Overlay);
-  // getOut() << "qr cons 1 " << hmdError << std::endl;
-  CreateDevice(&qrDevice, &qrContext, &qrSwapChain);
-  // getOut() << "qr cons 2" << std::endl;
-  
-  HRESULT hr = qrDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&qrInfoQueue);
-  if (SUCCEEDED(hr)) {
-    qrInfoQueue->PushEmptyStorageFilter();
-  } else {
-    // getOut() << "info queue query failed" << std::endl;
-    // abort();
-  }
-
   std::thread([this]() -> void {
+    // getOut() << "qr cons 0" << std::endl;
+    vr::HmdError hmdError;
+    vr::VR_Init(&hmdError, vr::EVRApplicationType::VRApplication_Overlay);
+    // getOut() << "qr cons 1 " << hmdError << std::endl;
+    CreateDevice(&qrDevice, &qrContext, &qrSwapChain);
+    // getOut() << "qr cons 2" << std::endl;
+    
+    HRESULT hr = qrDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&qrInfoQueue);
+    if (SUCCEEDED(hr)) {
+      qrInfoQueue->PushEmptyStorageFilter();
+    } else {
+      // getOut() << "info queue query failed" << std::endl;
+      // abort();
+    }
+    
+    vr::EVRCompositorError err = vr::VRCompositor()->GetMirrorTextureD3D11(vr::EVREye::Eye_Left, qrDevice, &(void *)pD3D11ShaderResourceViewLeft);
+    if (err) {
+      getOut() << "failed to get mirror texture " << err << " " << (void *)pD3D11ShaderResourceViewLeft << std::endl;
+      // abort();
+    }
+    err = vr::VRCompositor()->GetMirrorTextureD3D11(vr::EVREye::Eye_Right, qrDevice, &(void *)pD3D11ShaderResourceViewRight);
+    if (err) {
+      getOut() << "failed to get mirror texture " << err << " " << (void *)pD3D11ShaderResourceViewRight << std::endl;
+      // abort();
+    }
+
     for (;;) {
       // getOut() << "thread 1" << std::endl;
       
@@ -159,97 +170,8 @@ QrEngine::QrEngine() :
       // getOut() << "thread 2" << std::endl;
 
       // read mirror texture
-      ID3D11ShaderResourceView *pD3D11ShaderResourceViewLeft = nullptr;
-      vr::EVRCompositorError err = vr::VRCompositor()->GetMirrorTextureD3D11(vr::EVREye::Eye_Left, qrDevice, &(void *)pD3D11ShaderResourceViewLeft);
-      if (err) {
-        getOut() << "failed to get mirror texture " << err << " " << (void *)pD3D11ShaderResourceViewLeft << std::endl;
-        // abort();
-      }
-      ID3D11ShaderResourceView *pD3D11ShaderResourceViewRight = nullptr;
-      err = vr::VRCompositor()->GetMirrorTextureD3D11(vr::EVREye::Eye_Right, qrDevice, &(void *)pD3D11ShaderResourceViewRight);
-      if (err) {
-        getOut() << "failed to get mirror texture " << err << " " << (void *)pD3D11ShaderResourceViewRight << std::endl;
-        // abort();
-      }
-      
-      // getOut() << "thread 3 " << err << " " << (void *)pD3D11ShaderResourceView << std::endl;
-
-      HRESULT hr;
-
-      ID3D11Resource *resLeft = nullptr;
-      pD3D11ShaderResourceViewLeft->GetResource(&resLeft);
-      ID3D11Resource *resRight = nullptr;
-      pD3D11ShaderResourceViewRight->GetResource(&resRight);
-
-      ID3D11Texture2D *colorTexLeft = nullptr;
-      hr = resLeft->QueryInterface(&colorTexLeft);
-      ID3D11Texture2D *colorTexRight = nullptr;
-      hr = resLeft->QueryInterface(&colorTexRight);
-      
-      // getOut() << "thread 4 " << hr << " " << (void *)colorTex << std::endl;
-      
-      D3D11_TEXTURE2D_DESC desc;
-      colorTexLeft->GetDesc(&desc);
-      
-      // InfoQueueLog();
-
-      if (!colorReadTexLeft || desc.Width != colorBufferDesc.Width || desc.Height != colorBufferDesc.Height) {
-        // getOut() << "thread 5" << std::endl;
-        
-        colorBufferDesc = desc;
-
-        D3D11_TEXTURE2D_DESC readDesc = desc;
-        readDesc.Usage = D3D11_USAGE_STAGING;
-        readDesc.BindFlags = 0;
-        readDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-        readDesc.MiscFlags = 0;
-        hr = qrDevice->CreateTexture2D(
-          &readDesc,
-          NULL,
-          &colorReadTexLeft
-        );
-        if (FAILED(hr)) {
-          // getOut() << "failed to create color read texture: " << (void *)hr << std::endl;
-          // this->pvrcompositor->InfoQueueLog();
-          InfoQueueLog();
-          abort();
-        }
-        hr = qrDevice->CreateTexture2D(
-          &readDesc,
-          NULL,
-          &colorReadTexRight
-        );
-        if (FAILED(hr)) {
-          // getOut() << "failed to create color read texture: " << (void *)hr << std::endl;
-          // this->pvrcompositor->InfoQueueLog();
-          InfoQueueLog();
-          abort();
-        }
-      }
-      
-      // getOut() << "thread 6" << std::endl;
-      
-      // sInfoQueueLog();
-      
-      // getOut() << "thread 7" << std::endl;
-
-      qrContext->CopyResource(
-        colorReadTexLeft,
-        colorTexLeft
-      );
-      qrContext->CopyResource(
-        colorReadTexRight,
-        colorTexRight
-      );
-      
-      // InfoQueueLog();
-
-      colorTexLeft->Release();
-      colorTexRight->Release();
-      resLeft->Release();
-      resRight->Release();
-      vr::VRCompositor()->ReleaseMirrorTextureD3D11(pD3D11ShaderResourceViewLeft);
-      vr::VRCompositor()->ReleaseMirrorTextureD3D11(pD3D11ShaderResourceViewRight);
+      getMirrorTexture(pD3D11ShaderResourceViewLeft, colorReadTexLeft);
+      getMirrorTexture(pD3D11ShaderResourceViewRight, colorReadTexRight);
       
       // getOut() << "thread 8" << std::endl;
 
@@ -281,11 +203,11 @@ QrEngine::QrEngine() :
       float projectionMatrixInverseRight[16];
       getMatrixInverse(projectionMatrixRight, projectionMatrixInverseRight);
 
-      float eyeWidth = (float)desc.Width;
-      float eyeHeight = (float)desc.Height;
-      QrCode qrCodeLeft = readQrCode(colorReadTexLeft, viewMatrixInverseLeft, projectionMatrixInverseLeft, eyeWidth, eyeHeight);
-      QrCode qrCodeRight = readQrCode(colorReadTexRight, viewMatrixInverseRight, projectionMatrixInverseRight, eyeWidth, eyeHeight);
-      if (qrCodeLeft.data.length() > 0 && qrCodeRight.data.length() > 0 && qrCodeLeft.data == qrCodeRight.data) {
+      float eyeWidth = (float)colorBufferDesc.Width;
+      float eyeHeight = (float)colorBufferDesc.Height;
+      QrCode qrCodeLeft = readQrCode(0, colorReadTexLeft, viewMatrixInverseLeft, projectionMatrixInverseLeft, eyeWidth, eyeHeight);
+      QrCode qrCodeRight = readQrCode(1, colorReadTexRight, viewMatrixInverseRight, projectionMatrixInverseRight, eyeWidth, eyeHeight);
+      if (qrCodeLeft.data.length() > 0 && qrCodeLeft.data == qrCodeRight.data) {
         QrCode qrCodeDepth = getQrCodeDepth(qrCodeLeft, qrCodeRight, viewMatrixInverseLeft, projectionMatrixInverseLeft, viewMatrixInverseRight, projectionMatrixInverseRight);
 
         {
@@ -317,7 +239,67 @@ QrEngine::QrEngine() :
     }
   }).detach();
 }
-QrCode QrEngine::readQrCode(ID3D11Texture2D *colorReadTex, float *viewMatrixInverse, float *projectionMatrixInverse, float eyeWidth, float eyeHeight) {
+void QrEngine::getMirrorTexture(ID3D11ShaderResourceView *pD3D11ShaderResourceViewLeft, ID3D11Texture2D *&colorReadTexLeft) {
+  HRESULT hr;
+
+  ID3D11Resource *resLeft = nullptr;
+  pD3D11ShaderResourceViewLeft->GetResource(&resLeft);
+
+  ID3D11Texture2D *colorTexLeft = nullptr;
+  hr = resLeft->QueryInterface(&colorTexLeft);
+  if (FAILED(hr)) {
+    getOut() << "get color tex failed " << (void *)hr << std::endl;
+    InfoQueueLog();
+    abort();
+  }
+  // getOut() << "thread 4 " << hr << " " << (void *)colorTex << std::endl;
+  
+  D3D11_TEXTURE2D_DESC desc;
+  colorTexLeft->GetDesc(&desc);
+  
+  // InfoQueueLog();
+
+  if (!colorReadTexLeft || desc.Width != colorBufferDesc.Width || desc.Height != colorBufferDesc.Height) {
+    getOut() << "thread 5" << std::endl;
+    
+    colorBufferDesc = desc;
+
+    D3D11_TEXTURE2D_DESC readDesc = desc;
+    readDesc.Usage = D3D11_USAGE_STAGING;
+    readDesc.BindFlags = 0;
+    readDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    readDesc.MiscFlags = 0;
+    hr = qrDevice->CreateTexture2D(
+      &readDesc,
+      NULL,
+      &colorReadTexLeft
+    );
+    if (FAILED(hr)) {
+      getOut() << "failed to create color read texture: " << (void *)hr << std::endl;
+      // this->pvrcompositor->InfoQueueLog();
+      InfoQueueLog();
+      abort();
+    }
+  }
+  
+  // getOut() << "thread 6" << std::endl;
+  
+  // sInfoQueueLog();
+  
+  // getOut() << "thread 7" << std::endl;
+
+  qrContext->CopyResource(
+    colorReadTexLeft,
+    colorTexLeft
+  );
+  
+  // InfoQueueLog();
+
+  colorTexLeft->Release();
+  resLeft->Release();
+  // vr::VRCompositor()->ReleaseMirrorTextureD3D11(pD3D11ShaderResourceViewLeft);
+}
+QrCode QrEngine::readQrCode(int i, ID3D11Texture2D *colorReadTex, float *viewMatrixInverse, float *projectionMatrixInverse, float eyeWidth, float eyeHeight) {
   D3D11_MAPPED_SUBRESOURCE resource;
   HRESULT hr = qrContext->Map(
     colorReadTex,
@@ -345,12 +327,20 @@ QrCode QrEngine::readQrCode(ID3D11Texture2D *colorReadTex, float *viewMatrixInve
 
   qrContext->Unmap(colorReadTex, 0);
 
+  /* std::string s("frame");
+  s += std::to_string(i);
+  s += "-";
+  s += std::to_string(++frameId);
+  s += ".png";
+  stbi_write_png(s.c_str(), colorBufferDesc.Width, colorBufferDesc.Height, 4, rgbaImg.data(), colorBufferDesc.Width * 4); */
+
   std::shared_ptr<ZXing::GenericLuminanceSource> luminanceSource(
     new ZXing::GenericLuminanceSource(colorBufferDesc.Width, colorBufferDesc.Height, rgbaImg.data(), lBmpRowPitch, 4, 0, 1, 2)
   );
   std::unique_ptr<ZXing::HybridBinarizer> binarizer = std::make_unique<ZXing::HybridBinarizer>(luminanceSource, false);
   ZXing::BinaryBitmap &bitmap = *binarizer;
   ZXing::Result result = reader.decode(bitmap);
+  // getOut() << "qr code valid " << i << " " << result.isValid() << std::endl;
   if (result.isValid()) {
     const std::wstring &wText = result.text();
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
@@ -389,6 +379,14 @@ QrCode QrEngine::getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRi
     worldPointCenterRight[1] - worldPointCenterLeft[1],
     worldPointCenterRight[2] - worldPointCenterLeft[2]
   );
+  
+  float viewMatrixLeft[16];
+  getMatrixInverse(viewMatrixInverseLeft, viewMatrixLeft);
+  
+  /* float position[3];
+  float quaternion[4];
+  float scale[3];
+  decomposeMatrix(viewMatrixLeft, position, quaternion, scale); */
 
   QrCode qrCode;
   qrCode.data = qrCodeLeft.data;
@@ -403,7 +401,7 @@ QrCode QrEngine::getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRi
     perspectiveDivideVector(worldPointLeft);
     float worldPointDot[4];
     memcpy(worldPointDot, worldPointLeft, sizeof(worldPointDot));
-    applyVector4Matrix(worldPointLeft, viewMatrixInverseLeft);
+    // applyVector4Matrix(worldPointLeft, viewMatrixInverseLeft);
 
     float worldPointRight[4] = {
       qrCodeRight.points[i*3],
@@ -413,21 +411,26 @@ QrCode QrEngine::getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRi
     };
     applyVector4Matrix(worldPointRight, projectionMatrixInverseRight);
     perspectiveDivideVector(worldPointRight);
-    applyVector4Matrix(worldPointRight, viewMatrixInverseRight);
+    // applyVector4Matrix(worldPointRight, viewMatrixInverseRight);
 
     float pointSeparation = vectorLength(
       worldPointRight[0] - worldPointLeft[0],
       worldPointRight[1] - worldPointLeft[1],
       worldPointRight[2] - worldPointLeft[2]
     );
-    float zForward = (zNear * eyeSeparation) / pointSeparation;
-    float z = zNear + zForward;
-    worldPointDot[2] = -z;
+    float z = (zNear * eyeSeparation) / pointSeparation;
+    // float z = zNear + zForward;
+    float oldZ = worldPointDot[2];
+    // worldPointDot[2] = -z;
     applyVector4Matrix(worldPointDot, viewMatrixInverseLeft);
-    
-    if (i == 0) {
-      getOut() << "get separation " << eyeSeparation << " " << pointSeparation << std::endl;
-    }
+
+    float depthOffset[3];
+    memcpy(depthOffset, worldPointDot, sizeof(depthOffset));
+    subVector3(depthOffset, worldPointCenterLeft);
+    normalizeVector3(depthOffset);
+    multiplyVector3Scalar(depthOffset, z - zNear);
+    // applyVector3Quaternion(depthOffset, quaternion);
+    addVector3(worldPointDot, depthOffset);
 
     qrCode.points[i*3] = worldPointDot[0];
     qrCode.points[i*3+1] = worldPointDot[1];

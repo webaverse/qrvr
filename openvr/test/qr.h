@@ -52,6 +52,8 @@ public:
   Mutex mut;
   Semaphore sem;
   // bool running = false;
+  ID3D11ShaderResourceView *pD3D11ShaderResourceViewLeft = nullptr;
+  ID3D11ShaderResourceView *pD3D11ShaderResourceViewRight = nullptr;
   ID3D11Texture2D *colorReadTexLeft = nullptr;
   ID3D11Texture2D *colorReadTexRight = nullptr;
   D3D11_TEXTURE2D_DESC colorBufferDesc{};
@@ -67,8 +69,9 @@ public:
 
 public:
   QrEngine();
-  QrCode readQrCode(ID3D11Texture2D *colorReadTex, float *viewMatrixInverse, float *projectionMatrixInverse, float eyeWidth, float eyeHeight);
+  QrCode readQrCode(int i, ID3D11Texture2D *colorReadTex, float *viewMatrixInverse, float *projectionMatrixInverse, float eyeWidth, float eyeHeight);
   QrCode getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRight, float *viewMatrixInverseLeft, float *projectionMatrixInverseLeft, float *viewMatrixInverseRight, float *projectionMatrixInverseRight);
+  void getMirrorTexture(ID3D11ShaderResourceView *pD3D11ShaderResourceView, ID3D11Texture2D *&colorReadTex);
   void setEnabled(bool enabled);
   void getQrCodes(std::function<void(const std::vector<QrCode> &)> cb);
   void InfoQueueLog();
