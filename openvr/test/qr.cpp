@@ -97,7 +97,7 @@ void CreateDevice(ID3D11Device5 **device, ID3D11DeviceContext4 **context, IDXGIS
     abort();
   }
 }
-vr::HmdMatrix34_t GetViewMatrix() {
+vr::HmdMatrix34_t GetHmdViewMatrix() {
   vr::TrackedDevicePose_t cachedRenderPoses[vr::k_unMaxTrackedDeviceCount];
   vr::VRCompositor()->GetLastPoses(cachedRenderPoses, ARRAYSIZE(cachedRenderPoses), nullptr, 0);
   for (size_t i = 0; i < ARRAYSIZE(cachedRenderPoses); i++) {
@@ -108,13 +108,13 @@ vr::HmdMatrix34_t GetViewMatrix() {
   }
   return vr::HmdMatrix34_t{};
 }
-/* vr::HmdMatrix34_t GetStageMatrix() {
-  return vr::VRSystem()->GetSeatedZeroPoseToStandingAbsoluteTrackingPose();
-} */
+vr::HmdMatrix34_t GetEyeViewMatrix(vr::EVREye eye) {
+  return vr::VRCompositor()->GetEyeToHeadTransform(eye);
+}
 constexpr float zNear = 0.3f;
 constexpr float zFar = 100.0f;
-vr::HmdMatrix44_t GetProjectionMatrix() {
-  return vr::VRSystem()->GetProjectionMatrix(vr::Eye_Left, zNear, zFar);
+vr::HmdMatrix44_t GetProjectionMatrix(vr::EVREye eye) {
+  return vr::VRSystem()->GetProjectionMatrix(eye, zNear, zFar);
 }
 
 int frameId = 0;
@@ -256,19 +256,39 @@ QrEngine::QrEngine() {
 
       uint32_t eyeWidth = desc.Width;
       uint32_t eyeHeight = desc.Height;
-      setPoseMatrix(viewMatrixInverse, viewMatrixHmd);
+      vr::HmdMatrix34_t viewMatrixHmd = GetHmdViewMatrix();
+      float viewMatrixHmdInverse[16];
+      setPoseMatrix(viewMatrixHmdInverse, viewMatrixHmd);
 
-      vr::HmdMatrix44_t projectionMatrixHmd = GetProjectionMatrix();
-      float projectionMatrix[16];
-      setPoseMatrix(projectionMatrix, projectionMatrixHmd);
-      getMatrixInverse(projectionMatrix, projectionMatrixInverse);
+      float viewMatrixEyeInverseLeft[16];
+      vr::HmdMatrix44_t viewMatrixEyeLeft = GetEyeViewMatrix(vr::Eye_Left);
+      setPoseMatrix(viewMatrixEyeInverseLeft, viewMatrixEyeLeft);
+      float viewMatrixInverseLeft[16];
+      multiplyMatrices(viewMatrixHmdInverse, viewMatrixEyeInverseLeft, viewMatrixInverseLeft);
 
-      // getOut() << "thread 9" << std::endl;
+      float viewMatrixEyeInverseRight[16];
+      vr::HmdMatrix44_t viewMatrixEyeRight = GetEyeViewMatrix(vr::Eye_Left);
+      setPoseMatrix(viewMatrixEyeInverseRight, viewMatrixEyeRight);
+      float viewMatrixInverseRight[16];
+      multiplyMatrices(viewMatrixHmdInverse, viewMatrixEyeInverseRight, viewMatrixInverseRight);
 
-      QrCode qrCodeLeft = readQrCode(colorReadTexLeft, viewMatrixInverse, projectionMatrixInverse);
-      QrCode qrCodeRight = readQrCode(colorReadTexRight, viewMatrixInverse, projectionMatrixInverse);
+      vr::HmdMatrix44_t projectionMatrixHmdLeft = GetProjectionMatrix(vr::Eye_Left);
+      float projectionMatrixLeft[16];
+      setPoseMatrix(projectionMatrixLeft, projectionMatrixHmdLeft);
+      float projectionMatrixInverseLeft[16];
+      getMatrixInverse(projectionMatrixLeft, projectionMatrixInverseLeft);
 
-      {
+      vr::HmdMatrix44_t projectionMatrixHmdRight = GetProjectionMatrix(vr::Eye_Right);
+      float projectionMatrixRight[16];
+      setPoseMatrix(projectionMatrixRight, projectionMatrixHmdRight);
+      float projectionMatrixInverseRight[16];
+      getMatrixInverse(projectionMatrixRight, projectionMatrixInverseRight);
+
+      QrCode qrCodeLeft = readQrCode(colorReadTexLeft, viewMatrixInverseLeft, projectionMatrixInverseLeft);
+      QrCode qrCodeRight = readQrCode(colorReadTexRight, viewMatrixInverseRight, projectionMatrixInverseRight);
+      if (qrCodeLeft.data.length() > 0 && qrCodeRight.length() > 0 && qrCodeLeft.data == qrCodeRight.data) {
+        QrCode qrCodeDepth = getQrCodeDepth(qrCodeLeft, qrCodeLeft.right);
+
         std::lock_guard<Mutex> lock(mut);
 
         if (data.length() > 0) {
