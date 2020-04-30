@@ -361,8 +361,9 @@ std::string Path_Compact( const std::string & sRawPath, char slash )
 		std::string::size_type len = sPath.length();
 		if( sPath[ len-1 ] == '.'  && sPath[ len-2 ] == slash )
 		{
-		  // sPath.pop_back();
-		  sPath[len-1] = 0;  // for now, at least
+			sPath.pop_back();
+			//Not sure why the following line of code was used for a while.  It causes problems with strlen.
+			//sPath[len-1] = 0;  // for now, at least 
 		}
 	}
 
@@ -819,7 +820,7 @@ std::string Path_FilePathToUrl( const std::string & sRelativePath, const std::st
 
 		size_t unBufferSize = sAbsolute.length() * 3;
 		char *pchBuffer = (char *)alloca( unBufferSize );
-		V_URLEncodeNoPlusForSpace( pchBuffer, (int)unBufferSize, sAbsolute.c_str(), (int)sAbsolute.length() );
+		V_URLEncodeFullPath( pchBuffer, (int)unBufferSize, sAbsolute.c_str(), (int)sAbsolute.length() );
 
 		return std::string( FILE_URL_PREFIX ) + pchBuffer;
 	}
