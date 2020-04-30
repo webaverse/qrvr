@@ -254,8 +254,6 @@ QrEngine::QrEngine() {
       
       // getOut() << "thread 8" << std::endl;
 
-      uint32_t eyeWidth = desc.Width;
-      uint32_t eyeHeight = desc.Height;
       vr::HmdMatrix34_t viewMatrixHmd = GetHmdViewMatrix();
       float viewMatrixHmdInverse[16];
       setPoseMatrix(viewMatrixHmdInverse, viewMatrixHmd);
@@ -284,10 +282,12 @@ QrEngine::QrEngine() {
       float projectionMatrixInverseRight[16];
       getMatrixInverse(projectionMatrixRight, projectionMatrixInverseRight);
 
-      QrCode qrCodeLeft = readQrCode(colorReadTexLeft, viewMatrixInverseLeft, projectionMatrixInverseLeft);
-      QrCode qrCodeRight = readQrCode(colorReadTexRight, viewMatrixInverseRight, projectionMatrixInverseRight);
+      float eyeWidth = (float)desc.Width;
+      float eyeHeight = (float)desc.Height;
+      QrCode qrCodeLeft = readQrCode(colorReadTexLeft, viewMatrixInverseLeft, projectionMatrixInverseLeft, eyeWidth, eyeHeight);
+      QrCode qrCodeRight = readQrCode(colorReadTexRight, viewMatrixInverseRight, projectionMatrixInverseRight, eyeWidth, eyeHeight);
       if (qrCodeLeft.data.length() > 0 && qrCodeRight.length() > 0 && qrCodeLeft.data == qrCodeRight.data) {
-        QrCode qrCodeDepth = getQrCodeDepth(qrCodeLeft, qrCodeLeft.right);
+        QrCode qrCodeDepth = getQrCodeDepth(qrCodeLeft, qrCodeRight, viewMatrixInverseLeft, projectionMatrixInverseLeft, viewMatrixInverseRight, projectionMatrixInverseRight);
 
         std::lock_guard<Mutex> lock(mut);
 
@@ -304,20 +304,9 @@ QrEngine::QrEngine() {
           qrCode.data = std::move(data);
           
           for (int i = 0; i < 4; i++) {
-            const ZXing::ResultPoint &p = resultPoints[i];
-            float worldPoint[4] = {
-              (p.x()/(float)eyeWidth) * 2.0f - 1.0f,
-              (1.0f-(p.y()/(float)eyeHeight)) * 2.0f - 1.0f,
-              0.0f,
-              1.0f,
-            };
-            applyVector4Matrix(worldPoint, projectionMatrixInverse);
-            perspectiveDivideVector(worldPoint);
-            applyVector4Matrix(worldPoint, viewMatrixInverse);
-
-            qrCode.points[i*3] = worldPoint[0];
-            qrCode.points[i*3+1] = worldPoint[1];
-            qrCode.points[i*3+2] = worldPoint[2];
+            qrCode.points[i*3] = qrCodeDepth.points[i*3];
+            qrCode.points[i*3+1] = qrCodeDepth.points[i*3+1];
+            qrCode.points[i*3+2] = qrCodeDepth.points[i*3+2];
           }
         } else {
           qrCodes.clear();
@@ -327,7 +316,7 @@ QrEngine::QrEngine() {
     }
   }).detach();
 }
-QrCode QrEngine::readQrCode(ID3D11Texture2D *colorReadTex, float *viewMatrixInverse, float *projectionMatrixInverse) {
+QrCode QrEngine::readQrCode(ID3D11Texture2D *colorReadTex, float *viewMatrixInverse, float *projectionMatrixInverse, float eyeWidth, float eyeHeight) {
   D3D11_MAPPED_SUBRESOURCE resource;
   hr = qrContext->Map(
     colorReadTex,
@@ -370,14 +359,76 @@ QrCode QrEngine::readQrCode(ID3D11Texture2D *colorReadTex, float *viewMatrixInve
     qrCode.data = std::move(data);
     for (int i = 0; i < 4; i++) {
       const ZXing::ResultPoint &resultPoint = resultPoints[i];
-      qrCode.points[i*3] = resultPoint.x();
-      qrCode.points[i*3+1] = resultPoint.y();
+      qrCode.points[i*3] = (p.x()/(float)eyeWidth) * 2.0f - 1.0f;
+      qrCode.points[i*3+1] = (1.0f-(p.y()/(float)eyeHeight)) * 2.0f - 1.0f;
       qrCode.points[i*3+2] = 0;
     }
     return qrCode;
   } else {
     return QrCode{};
   }
+}
+QrCode QrEngine::getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRight, float *viewMatrixInverseLeft, float *projectionMatrixInverseLeft, float *viewMatrixInverseRight, float *projectionMatrixInverseRight) {
+  float worldPointCenterLeft[4] = {
+    0,
+    0,
+    0,
+    1,
+  };
+  applyVector4Matrix(worldPointCenterLeft, viewMatrixInverseLeft);
+  float worldPointCenterRight[4] = {
+    0,
+    0,
+    0,
+    1,
+  };
+  applyVector4Matrix(worldPointCenterRight, viewMatrixInverseRight);
+  float eyeSeparation = vectorLength(
+    worldPointCenterRight[0] - worldPointCenterLeft[0],
+    worldPointCenterRight[1] - worldPointCenterLeft[1],
+    worldPointCenterRight[2] - worldPointCenterLeft[2]
+  );
+
+  QrCode qrCode;
+  qrCode.data = qrCodeLeft.data;
+  for (int i = 0; i < 4; i++) {
+    float worldPointLeft[4] = {
+      qrCodeLeft.points[i*3],
+      qrCodeLeft.points[i*3+1],
+      0.0f,
+      1.0f,
+    };
+    applyVector4Matrix(worldPointLeft, projectionMatrixInverseLeft);
+    perspectiveDivideVector(worldPointLeft);
+    float worldPointDot[4];
+    memcpy(worldPointDot, worldPointLeft, sizeof(worldPointDot));
+    applyVector4Matrix(worldPointLeft, viewMatrixInverseLeft);
+
+    float worldPointRight[4] = {
+      qrCodeRight.points[i*3],
+      qrCodeRight.points[i*3+1],
+      0.0f,
+      1.0f,
+    };
+    applyVector4Matrix(worldPointRight, projectionMatrixInverseRight);
+    perspectiveDivideVector(worldPointRight);
+    applyVector4Matrix(worldPointRight, viewMatrixInverseRight);
+
+    float pointSeparation = vectorLength(
+      worldPointRight[0] - worldPointLeft[0],
+      worldPointRight[1] - worldPointLeft[1],
+      worldPointRight[2] - worldPointLeft[2]
+    );
+    float zForward = (zNear * eyeSeparation) / pointSeparation;
+    float z = zNear + zForward;
+    worldPointDot[2] = -z;
+    applyVector4Matrix(worldPointDot, viewMatrixInverseLeft);
+
+    qrCode.points[i*3] = worldPointDot[0];
+    qrCode.points[i*3+1] = worldPointDot[1];
+    qrCode.points[i*3+2] = worldPointDot[2];
+  }
+  return qrCode;
 }
 void QrEngine::getQrCodes(std::function<void(const std::vector<QrCode> &)> cb) {
   sem.lock();

@@ -65,7 +65,8 @@ public:
 
 public:
   QrEngine();
-  QrCode readQrCode(ID3D11Texture2D *colorReadTex, float *viewMatrixInverse, float *projectionMatrixInverse);
+  QrCode readQrCode(ID3D11Texture2D *colorReadTex, float *viewMatrixInverse, float *projectionMatrixInverse, float eyeWidth, float eyeHeight);
+  QrCode getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRight, float *viewMatrixInverseLeft, float *projectionMatrixInverseLeft, float *viewMatrixInverseRight, float *projectionMatrixInverseRight);
   void setEnabled(bool enabled);
   void getQrCodes(std::function<void(const std::vector<QrCode> &)> cb);
   void InfoQueueLog();
