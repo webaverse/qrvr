@@ -272,6 +272,17 @@ void addVector3(float *a, const float *b) {
   a[1] += b[1];
   a[2] += b[2];
 }
+void subVector3(float *a, const float *b) {
+  a[0] -= b[0];
+  a[1] -= b[1];
+  a[2] -= b[2];
+}
+void normalizeVector3(float *v) {
+  float l = vectorLength(v[0], v[1], v[2]);
+  v[0] /= l;
+  v[1] /= l;
+  v[2] /= l;
+}
 void addVector4(float *a, const float *b) {
   a[0] += b[0];
   a[1] += b[1];

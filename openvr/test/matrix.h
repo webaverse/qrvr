@@ -15,6 +15,8 @@ void multiplyMatrices(const float *aMatrix, const float *bMatrix, float *outMatr
 void composeMatrix(float *matrix, const float *position, const float *quaternion, const float *scale);
 void decomposeMatrix(const float *matrix, float *position, float *quaternion, float *scale);
 void addVector3(float *a, const float *b);
+void subVector3(float *a, const float *b);
+void normalizeVector3(float *v);
 void addVector4(float *a, const float *b);
 void applyVector3Quaternion(float *v, const float *q);
 void applyVector3Matrix(float *v, const float *m);
