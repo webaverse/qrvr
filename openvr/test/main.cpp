@@ -2,14 +2,12 @@
 
 #include "matrix.h"
 #include "qr.h"
-
-#include <cmath>
-#define M_PI 3.14159265358979323846264338327950288
+#include "locomotion.h"
 
 using namespace v8;
 
 NAN_METHOD(initVr) {
-  vr::HmdError ;
+  vr::HmdError hmdError;
   vr::VR_Init(&hmdError, vr::EVRApplicationType::VRApplication_Overlay);
 }
 
@@ -49,8 +47,8 @@ NAN_METHOD(createLocomotionEngine) {
   locomotionEngine.reset(new LocomotionEngine());
 }
 NAN_METHOD(setSceneAppLocomotionEnabled) {
-  if (args.Length() > 0 && args[0]->IsBoolean()) {
-    locomotionEngine->sceneAppLocomotionEnabled = args[0]->BooleanValue();
+  if (info.Length() > 0 && info[0]->IsBoolean()) {
+    locomotionEngine->sceneAppLocomotionEnabled = info[0]->BooleanValue(Isolate::GetCurrent());
   }
 }
 NAN_METHOD(getLocomotionInputs) {
@@ -67,11 +65,11 @@ NAN_METHOD(getLocomotionInputs) {
   info.GetReturnValue().Set(array);
 }
 NAN_METHOD(setChaperoneTransform) {
-  if (args.Length() > 0 && args[0]->IsFloat32Array()) {
-    Local<Float32Array> matrixArray = Local<Float32Array>::Cast(args[0]);
+  if (info.Length() > 0 && info[0]->IsFloat32Array()) {
+    Local<Float32Array> matrixArray = Local<Float32Array>::Cast(info[0]);
     if (matrixArray->Length() == 16) {
       Local<ArrayBuffer> arrayBuffer = matrixArray->Buffer();
-      float *m = (float *)arrayBuffer->GetContents()->Data();
+      float *m = (float *)arrayBuffer->GetContents().Data();
       vr::HmdMatrix34_t m2;
       setPoseMatrix(m2, m);
       vr::VRChaperoneSetup()->SetWorkingStandingZeroPoseToRawTrackingPose(&m2);

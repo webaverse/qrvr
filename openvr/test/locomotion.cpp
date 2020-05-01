@@ -1,6 +1,9 @@
 #include "locomotion.h"
 #include "matrix.h"
 
+#include <cmath>
+#define M_PI 3.14159265358979323846264338327950288
+
 LocomotionEngine::LocomotionEngine() {
   char dir[MAX_PATH];
   GetCurrentDirectory(sizeof(dir), dir);
@@ -13,7 +16,7 @@ LocomotionEngine::LocomotionEngine() {
   err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Touch", &pActionJoy1Touch);
   err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Axis", &pActionJoy1Axis);
 
-  std::thread([]() -> void {
+  std::thread([=]() -> void {
     uint64_t m_lastFrameIndex = 0;
 
     for (;;) {
@@ -47,7 +50,7 @@ LocomotionEngine::LocomotionEngine() {
           1, 0, 0, 0,
           0, 1, 0, 0,
           0, 0, 1, 0,
-          0, -v, -d, 1,
+          0, -v, 0, 1,
         };
         vr::HmdMatrix34_t m2;
         setPoseMatrix(m2, m);
@@ -58,17 +61,17 @@ LocomotionEngine::LocomotionEngine() {
     }
   }).detach();
 }
-LocomotionEngine::getLocomotionInputs(std::function<void(float *locomotionInputs)> cb) {
+void LocomotionEngine::getLocomotionInputs(std::function<void(float *locomotionInputs)> cb) {
   sem.lock();
 
   std::lock_guard<Mutex> lock(mut);
   if (!sceneAppLocomotionEnabled) {
     float m[5];
-    m[0] = locomotionEngine->pInputJoy1Axis.x;
-    m[1] = locomotionEngine->pInputJoy1Axis.y;
-    m[2] = locomotionEngine->pInputJoy1Axis.z;
-    m[3] = locomotionEngine->pInputJoy1Press.bState ? 1.0f : 0.0f;
-    m[4] = locomotionEngine->pInputJoy1Touch.bState ? 1.0f : 0.0f;
+    m[0] = pInputJoy1Axis.x;
+    m[1] = pInputJoy1Axis.y;
+    m[2] = pInputJoy1Axis.z;
+    m[3] = pInputJoy1Press.bState ? 1.0f : 0.0f;
+    m[4] = pInputJoy1Touch.bState ? 1.0f : 0.0f;
     cb(m);
   } else {
     cb(nullptr);

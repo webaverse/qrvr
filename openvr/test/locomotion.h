@@ -40,7 +40,7 @@ public:
 
 public:
   LocomotionEngine();
-  getLocomotionInputs(std::function<void(float *locomotionInputs)> cb);
+  void getLocomotionInputs(std::function<void(float *locomotionInputs)> cb);
 };
 
 #endif
