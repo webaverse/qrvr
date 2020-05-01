@@ -121,33 +121,33 @@ int frameId = 0;
 QrEngine::QrEngine() :
   reader(ZXing::DecodeHints().setTryHarder(true).setTryRotate(true))
 {
+  // getOut() << "qr cons 0" << std::endl;
+  vr::HmdError hmdError;
+  vr::VR_Init(&hmdError, vr::EVRApplicationType::VRApplication_Overlay);
+  // getOut() << "qr cons 1 " << hmdError << std::endl;
+  CreateDevice(&qrDevice, &qrContext, &qrSwapChain);
+  // getOut() << "qr cons 2" << std::endl;
+  
+  HRESULT hr = qrDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&qrInfoQueue);
+  if (SUCCEEDED(hr)) {
+    qrInfoQueue->PushEmptyStorageFilter();
+  } else {
+    // getOut() << "info queue query failed" << std::endl;
+    // abort();
+  }
+  
+  vr::EVRCompositorError err = vr::VRCompositor()->GetMirrorTextureD3D11(vr::EVREye::Eye_Left, qrDevice, &(void *)pD3D11ShaderResourceViewLeft);
+  if (err) {
+    getOut() << "failed to get mirror texture " << err << " " << (void *)pD3D11ShaderResourceViewLeft << std::endl;
+    // abort();
+  }
+  err = vr::VRCompositor()->GetMirrorTextureD3D11(vr::EVREye::Eye_Right, qrDevice, &(void *)pD3D11ShaderResourceViewRight);
+  if (err) {
+    getOut() << "failed to get mirror texture " << err << " " << (void *)pD3D11ShaderResourceViewRight << std::endl;
+    // abort();
+  }
+  
   std::thread([this]() -> void {
-    // getOut() << "qr cons 0" << std::endl;
-    vr::HmdError hmdError;
-    vr::VR_Init(&hmdError, vr::EVRApplicationType::VRApplication_Overlay);
-    // getOut() << "qr cons 1 " << hmdError << std::endl;
-    CreateDevice(&qrDevice, &qrContext, &qrSwapChain);
-    // getOut() << "qr cons 2" << std::endl;
-    
-    HRESULT hr = qrDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&qrInfoQueue);
-    if (SUCCEEDED(hr)) {
-      qrInfoQueue->PushEmptyStorageFilter();
-    } else {
-      // getOut() << "info queue query failed" << std::endl;
-      // abort();
-    }
-    
-    vr::EVRCompositorError err = vr::VRCompositor()->GetMirrorTextureD3D11(vr::EVREye::Eye_Left, qrDevice, &(void *)pD3D11ShaderResourceViewLeft);
-    if (err) {
-      getOut() << "failed to get mirror texture " << err << " " << (void *)pD3D11ShaderResourceViewLeft << std::endl;
-      // abort();
-    }
-    err = vr::VRCompositor()->GetMirrorTextureD3D11(vr::EVREye::Eye_Right, qrDevice, &(void *)pD3D11ShaderResourceViewRight);
-    if (err) {
-      getOut() << "failed to get mirror texture " << err << " " << (void *)pD3D11ShaderResourceViewRight << std::endl;
-      // abort();
-    }
-
     for (;;) {
       // getOut() << "thread 1" << std::endl;
       
