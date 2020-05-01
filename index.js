@@ -6,7 +6,9 @@ const qr = require('./build/Release/qr.node');
 async function start({
   port = 8000,
 } = {}) {
+  qr.initVr();
   qr.createQrEngine();
+  qr.createLocomotionEngine();
 
   const presenceWss = new ws.Server({
     noServer: true,
