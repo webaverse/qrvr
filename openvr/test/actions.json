@@ -1,0 +1,103 @@
+{
+  "default_bindings": [
+     {
+        "controller_type" : "knuckles",
+        "binding_url" : "hellovr_bindings_knuckles.json"
+     },
+     {
+        "controller_type" : "generic",
+        "binding_url" : "hellovr_bindings_generic.json"
+     }
+  ],
+  "actions": [
+    {
+      "name": "/actions/main/in/Joy1Press",
+      "requirement": "optional",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/main/in/Joy1Touch",
+      "requirement": "optional",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/main/in/Joy1Axis",
+      "requirement": "optional",
+      "type": "vector2"
+    },
+
+    {
+      "name": "/actions/main/in/Joy2Press",
+      "requirement": "optional",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/main/in/Joy2Touch",
+      "requirement": "optional",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/main/in/Joy2Axis",
+      "requirement": "optional",
+      "type": "vector2"
+    },
+
+    {
+      "name": "/actions/main/in/Joy3Press",
+      "requirement": "optional",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/main/in/Joy3Touch",
+      "requirement": "optional",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/main/in/Joy3Axis",
+      "requirement": "optional",
+      "type": "vector2"
+    },
+    
+    {
+      "name": "/actions/main/in/Joy4Press",
+      "requirement": "optional",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/main/in/Joy4Touch",
+      "requirement": "optional",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/main/in/Joy4Axis",
+      "requirement": "optional",
+      "type": "vector2"
+    }
+  ],
+  "action_sets": [
+    {
+      "name": "/actions/main",
+      "usage": "leftright"
+    }
+  ],
+  "localization" : [
+    {
+      "language_tag": "en_us",
+
+      "/actions/main": "Game actions",
+
+      "/actions/main/in/Joy1Press" : "Joy1Press",
+      "/actions/main/in/Joy1Touch" : "Joy1Touch",
+      "/actions/main/in/Joy1Axis" : "Joy1Axis",
+      "/actions/main/in/Joy2Press" : "Joy2Press",
+      "/actions/main/in/Joy2Touch" : "Joy2Touch",
+      "/actions/main/in/Joy2Axis" : "Joy2Axis",
+      "/actions/main/in/Joy3Press" : "Joy3Press",
+      "/actions/main/in/Joy3Touch" : "Joy3Touch",
+      "/actions/main/in/Joy3Axis" : "Joy3Axis",
+      "/actions/main/in/Joy4Press" : "Joy4Press",
+      "/actions/main/in/Joy4Touch" : "Joy4Touch",
+      "/actions/main/in/Joy4Axis" : "Joy4Axis"
+    }
+  ]
+}
