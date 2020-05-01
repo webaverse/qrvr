@@ -1,14 +1,22 @@
 const http = require('http');
+const events = require('events');
+const {EventEmitter} = events;
 const express = require('express');
 const ws = require('ws');
-const qr = require('./build/Release/qr.node');
+const engine = require('./build/Release/qr.node');
 
 async function start({
   port = 8000,
 } = {}) {
-  qr.initVr();
-  qr.createQrEngine();
-  qr.createLocomotionEngine();
+  engine.initVr();
+  const qrEmitter = new EventEmitter();
+  engine.createQrEngine(qrCode => {
+    qrEmitter.emit('qrCode', qrCode);
+  });
+  const locomotionEmitter = new EventEmitter();
+  engine.createLocomotionEngine(locomotionInput => {
+    locomotionEmitter.emit('locomotionInput', locomotionInput);
+  });
 
   const presenceWss = new ws.Server({
     noServer: true,
@@ -17,18 +25,37 @@ async function start({
   presenceWss.on('connection', (s, req) => {
     if (!live) {
       live = true;
-
-      const _recurse = () => {
-        if (live) {
-          const qrCodes = qr.getQrCodes();
-          // console.log('detected QR code', qrCodes);
-          s.send(JSON.stringify(qrCodes));
+      
+      s.on('message', s => {
+        const j = JSON.parse(s);
+        const {method} = j;
+        switch (method) {
+          case 'setSceneAppLocomotionEnabled': {
+            const {data} = j;
+            engine.setSceneAppLocomotionEnabled(data);
+            break;
+          }
         }
-        setTimeout(_recurse);
-      };
-      _recurse();
-      s.on('close', () => {
+      });
+      const _onQrCode = qrCode => {
+        s.send(JSON.stringify({
+          method: 'qrCode',
+          datta: qrCode,
+        }));
+      });
+      qrEmitter.on('qrCode', _onQrCode);
+      const _onLocomotionInput = qrCode => {
+        s.send(JSON.stringify({
+          method: 'locomotionInput',
+          datta: qrCode,
+        }));
+      });
+      locomotionEmitter.on('locomotionInput', _onLocomotionInput);
+      s.once('close', () => {
         live = false;
+
+        qrEmitter.removeListener('qrCode', _onQrCode);
+        locomotionEmitter.removeListener('locomotionInput', _onLocomotionInput);
       });
     } else {
       s.close();
