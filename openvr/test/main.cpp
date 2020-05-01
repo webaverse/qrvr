@@ -8,90 +8,14 @@
 
 using namespace v8;
 
-float d = 0;
+NAN_METHOD(initVr) {
+  vr::HmdError ;
+  vr::VR_Init(&hmdError, vr::EVRApplicationType::VRApplication_Overlay);
+}
 
 std::unique_ptr<QrEngine> qrEngine;
 NAN_METHOD(createQrEngine) {
   qrEngine.reset(new QrEngine());
-
-  char dir[MAX_PATH];
-  GetCurrentDirectory(sizeof(dir), dir);
-  std::string dirString(dir);
-  dirString += "\\openvr\\test\\actions.json";
-  vr::EVRInputError err = vr::VRInput()->SetActionManifestPath(dirString.c_str());
-
-  vr::VRActionSetHandle_t pActionSetHandle;
-	err = vr::VRInput()->GetActionSetHandle("/actions/main", &pActionSetHandle);
-
-  vr::VRActionHandle_t pActionJoy1Press = 0;
-	err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Press", &pActionJoy1Press);
-
-  vr::VRActionHandle_t pActionJoy1Touch;
-  err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Touch", &pActionJoy1Touch);
-  
-  vr::VRActionHandle_t pActionJoy1Axis;
-  err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Axis", &pActionJoy1Axis);
-
-  vr::VRChaperoneSetup()->RevertWorkingCopy();
-  float m[16] = {
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, -5, 0, 1,
-  };
-  vr::HmdMatrix34_t m2;
-  setPoseMatrix(m2, m);
-  vr::VRChaperoneSetup()->SetWorkingStandingZeroPoseToRawTrackingPose(&m2);
-  vr::VRChaperoneSetup()->ShowWorkingSetPreview();
-
-  std::thread([=]() -> void {
-    uint64_t m_lastFrameIndex = 0;
-
-    for (;;) {
-      {
-        uint64_t newFrameIndex = 0;
-        float lastVSync = 0;
-        // while (newFrameIndex < (m_lastFrameIndex + 3)) {
-        while (newFrameIndex == m_lastFrameIndex) {
-          vr::VRSystem()->GetTimeSinceLastVsync(&lastVSync, &newFrameIndex);
-        }
-        m_lastFrameIndex = newFrameIndex;
-      }
-      {
-        vr::VRActiveActionSet_t actionSet{};
-        actionSet.ulActionSet = pActionSetHandle;
-        actionSet.nPriority = vr::k_nActionSetOverlayGlobalPriorityMax;
-        vr::EVRInputError err = vr::VRInput()->UpdateActionState(&actionSet, sizeof(actionSet), 1);
-        
-        vr::InputAnalogActionData_t pInputJoy1Axis;
-        err = vr::VRInput()->GetAnalogActionData(pActionJoy1Axis, &pInputJoy1Axis, sizeof(pInputJoy1Axis), vr::k_ulInvalidInputValueHandle);
-        
-        vr::InputDigitalActionData_t pInputJoy1Press;
-        err = vr::VRInput()->GetDigitalActionData(pActionJoy1Press, &pInputJoy1Press, sizeof(pInputJoy1Press), vr::k_ulInvalidInputValueHandle);
-
-        vr::InputDigitalActionData_t pInputJoy1Touch;
-        err = vr::VRInput()->GetDigitalActionData(pActionJoy1Touch, &pInputJoy1Touch, sizeof(pInputJoy1Touch ), vr::k_ulInvalidInputValueHandle);
-      }
-      {      
-        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::system_clock::now().time_since_epoch()
-        );
-        
-        float v = 5.0f * (1.0f + std::sin((float)(ms.count() % 2000) / 2000.0f * (float)M_PI * 2.0f) / 2.0f);
-        // d += 0.1;
-        float m[16] = {
-          1, 0, 0, 0,
-          0, 1, 0, 0,
-          0, 0, 1, 0,
-          0, -v, -d, 1,
-        };
-        vr::HmdMatrix34_t m2;
-        setPoseMatrix(m2, m);
-        vr::VRChaperoneSetup()->SetWorkingStandingZeroPoseToRawTrackingPose(&m2);
-        vr::VRChaperoneSetup()->ShowWorkingSetPreview();
-      }
-    }
-  }).detach();
 }
 NAN_METHOD(getQrCodes) {
   Local<Array> array = Nan::New<Array>();
@@ -120,9 +44,56 @@ NAN_METHOD(getQrCodes) {
   info.GetReturnValue().Set(array);
 }
 
+std::unique_ptr<LocomotionEngine> locomotionEngine;
+NAN_METHOD(createLocomotionEngine) {
+  locomotionEngine.reset(new LocomotionEngine());
+}
+NAN_METHOD(setSceneAppLocomotionEnabled) {
+  if (args.Length() > 0 && args[0]->IsBoolean()) {
+    locomotionEngine->sceneAppLocomotionEnabled = args[0]->BooleanValue();
+  }
+}
+NAN_METHOD(getLocomotionInputs) {
+  Local<Array> array = Nan::New<Array>();
+
+  locomotionEngine->getLocomotionInputs([&](float *locomotionInputs) -> void {
+    if (locomotionInputs) {
+      for (int i = 0; i < 5; i++) {
+        array->Set(Nan::GetCurrentContext(), Nan::New<Number>(i), Nan::New<Number>(locomotionInputs[i]));
+      }
+    }
+  });
+
+  info.GetReturnValue().Set(array);
+}
+NAN_METHOD(setChaperoneTransform) {
+  if (args.Length() > 0 && args[0]->IsFloat32Array()) {
+    Local<Float32Array> matrixArray = Local<Float32Array>::Cast(args[0]);
+    if (matrixArray->Length() == 16) {
+      Local<ArrayBuffer> arrayBuffer = matrixArray->Buffer();
+      float *m = (float *)arrayBuffer->GetContents()->Data();
+      vr::HmdMatrix34_t m2;
+      setPoseMatrix(m2, m);
+      vr::VRChaperoneSetup()->SetWorkingStandingZeroPoseToRawTrackingPose(&m2);
+    } else {
+      vr::VRChaperoneSetup()->RevertWorkingCopy();
+    }
+  } else {
+    vr::VRChaperoneSetup()->RevertWorkingCopy();
+  }
+  vr::VRChaperoneSetup()->ShowWorkingSetPreview();
+}
+
 void Init2(Local<Object> exports) {
+  Nan::SetMethod(exports, "initVr", initVr);
+
   Nan::SetMethod(exports, "createQrEngine", createQrEngine);
   Nan::SetMethod(exports, "getQrCodes", getQrCodes);
+
+  Nan::SetMethod(exports, "createLocomotionEngine", createLocomotionEngine);
+  Nan::SetMethod(exports, "setSceneAppLocomotionEnabled", setSceneAppLocomotionEnabled);
+  Nan::SetMethod(exports, "getLocomotionInputs", getLocomotionInputs);
+  Nan::SetMethod(exports, "setChaperoneTransform", setChaperoneTransform);
 }
 
 NAN_MODULE_INIT(Init) {

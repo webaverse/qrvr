@@ -4,6 +4,7 @@
       'target_name': 'qr',
       'sources': [
         './openvr/test/qr.cpp',
+        './openvr/test/locomotion.cpp',
         './openvr/test/out.cpp',
         './openvr/test/fnproxy.cpp',
         './openvr/test/matrix.cpp',

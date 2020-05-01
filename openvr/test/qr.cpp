@@ -121,9 +121,6 @@ int frameId = 0;
 QrEngine::QrEngine() :
   reader(ZXing::DecodeHints().setTryHarder(true).setTryRotate(true))
 {
-  // getOut() << "qr cons 0" << std::endl;
-  vr::HmdError hmdError;
-  vr::VR_Init(&hmdError, vr::EVRApplicationType::VRApplication_Overlay);
   // getOut() << "qr cons 1 " << hmdError << std::endl;
   CreateDevice(&qrDevice, &qrContext, &qrSwapChain);
   // getOut() << "qr cons 2" << std::endl;
