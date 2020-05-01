@@ -18,7 +18,6 @@ NAN_METHOD(createQrEngine) {
   GetCurrentDirectory(sizeof(dir), dir);
   std::string dirString(dir);
   dirString += "\\openvr\\test\\actions.json";
-  getOut() << "actions path " << dirString << std::endl;
   vr::EVRInputError err = vr::VRInput()->SetActionManifestPath(dirString.c_str());
 
   vr::VRActionSetHandle_t pActionSetHandle;
