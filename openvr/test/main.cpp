@@ -20,33 +20,18 @@ NAN_METHOD(createQrEngine) {
   dirString += "\\openvr\\test\\actions.json";
   getOut() << "actions path " << dirString << std::endl;
   vr::EVRInputError err = vr::VRInput()->SetActionManifestPath(dirString.c_str());
-  if (err) {
-    getOut() << "init error 1 " << err << std::endl;
-  }
 
   vr::VRActionSetHandle_t pActionSetHandle;
 	err = vr::VRInput()->GetActionSetHandle("/actions/main", &pActionSetHandle);
-  if (err) {
-    getOut() << "init error 2 " << err << std::endl;
-  }
 
   vr::VRActionHandle_t pActionJoy1Press = 0;
 	err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Press", &pActionJoy1Press);
-  if (err || !pActionJoy1Press) {
-    getOut() << "init error 3 " << err << " " << (void *)pActionJoy1Press << std::endl;
-  }
 
   vr::VRActionHandle_t pActionJoy1Touch;
   err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Touch", &pActionJoy1Touch);
-  if (err || !pActionJoy1Touch) {
-    getOut() << "init error 4 " << err << std::endl;
-  }
   
   vr::VRActionHandle_t pActionJoy1Axis;
   err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Axis", &pActionJoy1Axis);
-  if (err || !pActionJoy1Axis) {
-    getOut() << "init error 5 " << err << std::endl;
-  }
 
   vr::VRChaperoneSetup()->RevertWorkingCopy();
   float m[16] = {
@@ -78,29 +63,15 @@ NAN_METHOD(createQrEngine) {
         actionSet.ulActionSet = pActionSetHandle;
         actionSet.nPriority = vr::k_nActionSetOverlayGlobalPriorityMax;
         vr::EVRInputError err = vr::VRInput()->UpdateActionState(&actionSet, sizeof(actionSet), 1);
-        if (err) {
-          getOut() << "get error 1 " << err << std::endl;
-        }
         
         vr::InputAnalogActionData_t pInputJoy1Axis;
         err = vr::VRInput()->GetAnalogActionData(pActionJoy1Axis, &pInputJoy1Axis, sizeof(pInputJoy1Axis), vr::k_ulInvalidInputValueHandle);
-        if (!err) {
-          getOut() << "active " << pInputJoy1Axis.bActive << " " << pInputJoy1Axis.x << " " << pInputJoy1Axis.y << " " << pInputJoy1Axis.z << std::endl; 
-        } else {
-          getOut() << "get error 2 " << err << " " << (void *)pActionJoy1Axis << std::endl;
-        }
         
         vr::InputDigitalActionData_t pInputJoy1Press;
         err = vr::VRInput()->GetDigitalActionData(pActionJoy1Press, &pInputJoy1Press, sizeof(pInputJoy1Press), vr::k_ulInvalidInputValueHandle);
-        if (err) {
-          getOut() << "get error 3 " << err << " " << (void *)pActionJoy1Press << std::endl;
-        }
 
         vr::InputDigitalActionData_t pInputJoy1Touch;
         err = vr::VRInput()->GetDigitalActionData(pActionJoy1Touch, &pInputJoy1Touch, sizeof(pInputJoy1Touch ), vr::k_ulInvalidInputValueHandle);
-        if (err) {
-          getOut() << "get error 4 " << err << " " << (void *)pActionJoy1Touch << std::endl;
-        }
       }
       {      
         std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
