@@ -1,0 +1,41 @@
+{
+   "bindings" : {
+      "/actions/main" : {
+         "sources" : [
+            {
+               "inputs" : {
+                 "click" : {
+                     "output" : "/actions/main/in/Joy1Press"
+                  },
+                  "position" : {
+                     "output" : "/actions/main/in/Joy1Axis"
+                  },
+                  "touch" : {
+                     "output" : "/actions/main/in/Joy1Touch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                 "click" : {
+                     "output" : "/actions/main/in/Joy3Press"
+                  },
+                  "position" : {
+                     "output" : "/actions/main/in/Joy3Axis"
+                  },
+                  "touch" : {
+                     "output" : "/actions/main/in/Joy3Touch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/right/input/trackpad"
+            }
+         ]
+      }
+   },
+   "controller_type" : "generic",
+   "description" : "Bindings for the OpenVR SDK \"hellovr_opengl\" demo for a generic controller",
+   "name" : "HelloVR bindings for a generic controller"
+}

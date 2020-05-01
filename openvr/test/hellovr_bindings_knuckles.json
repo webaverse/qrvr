@@ -1,0 +1,71 @@
+{
+   "bindings" : {
+      "/actions/main" : {
+         "sources" : [
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/main/in/Joy1Press"
+                  },
+                  "position" : {
+                     "output" : "/actions/main/in/Joy1Axis"
+                  },
+                  "touch" : {
+                     "output" : "/actions/main/in/Joy1Touch"
+                  }
+               },
+               "mode" : "joystick",
+               "path" : "/user/hand/left/input/thumbstick"
+            },
+            {
+               "inputs" : {
+                 "click" : {
+                     "output" : "/actions/main/in/Joy2Press"
+                  },
+                  "position" : {
+                     "output" : "/actions/main/in/Joy2Axis"
+                  },
+                  "touch" : {
+                     "output" : "/actions/main/in/Joy2Touch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/main/in/Joy3Press"
+                  },
+                  "position" : {
+                     "output" : "/actions/main/in/Joy3Axis"
+                  },
+                  "touch" : {
+                     "output" : "/actions/main/in/Joy3Touch"
+                  }
+               },
+               "mode" : "joystick",
+               "path" : "/user/hand/right/input/thumbstick"
+            },
+            {
+               "inputs" : {
+                 "click" : {
+                     "output" : "/actions/main/in/Joy4Press"
+                  },
+                  "position" : {
+                     "output" : "/actions/main/in/Joy4Axis"
+                  },
+                  "touch" : {
+                     "output" : "/actions/main/in/Joy4Touch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/right/input/trackpad"
+            }
+          ]
+      }
+   },
+   "controller_type" : "knuckles",
+   "description" : "Knuckles bindings",
+   "name" : "Knuckles bindings"
+}
