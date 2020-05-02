@@ -34,7 +34,7 @@ public:
   vr::InputAnalogActionData_t pInputJoy1Axis;
   vr::InputDigitalActionData_t pInputJoy1Press;
   vr::InputDigitalActionData_t pInputJoy1Touch;
-  bool sceneAppLocomotionEnabled = false;
+  bool sceneAppLocomotionEnabled = true;
 
   Nan::Persistent<v8::Function> fn;
   uv_async_t locomotionAsync;
