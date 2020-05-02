@@ -26,7 +26,7 @@ NAN_METHOD(createLocomotionEngine) {
 }
 NAN_METHOD(setSceneAppLocomotionEnabled) {
   if (info.Length() > 0 && info[0]->IsBoolean()) {
-    locomotionEngine->sceneAppLocomotionEnabled = info[0]->BooleanValue(Isolate::GetCurrent());
+    locomotionEngine->setSceneAppLocomotionEnabled(info[0]->BooleanValue(Isolate::GetCurrent()));
   }
 }
 NAN_METHOD(setChaperoneTransform) {

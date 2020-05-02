@@ -28,12 +28,39 @@
 class LocomotionEngine {
 public:
   vr::VRActionSetHandle_t pActionSetHandle;
+
   vr::VRActionHandle_t pActionJoy1Press;
   vr::VRActionHandle_t pActionJoy1Touch;
   vr::VRActionHandle_t pActionJoy1Axis;
+
+  vr::VRActionHandle_t pActionJoy2Press;
+  vr::VRActionHandle_t pActionJoy2Touch;
+  vr::VRActionHandle_t pActionJoy2Axis;
+
+  vr::VRActionHandle_t pActionJoy3Press;
+  vr::VRActionHandle_t pActionJoy3Touch;
+  vr::VRActionHandle_t pActionJoy3Axis;
+
+  vr::VRActionHandle_t pActionJoy4Press;
+  vr::VRActionHandle_t pActionJoy4Touch;
+  vr::VRActionHandle_t pActionJoy4Axis;
+
   vr::InputAnalogActionData_t pInputJoy1Axis;
   vr::InputDigitalActionData_t pInputJoy1Press;
   vr::InputDigitalActionData_t pInputJoy1Touch;
+
+  vr::InputAnalogActionData_t pInputJoy2Axis;
+  vr::InputDigitalActionData_t pInputJoy2Press;
+  vr::InputDigitalActionData_t pInputJoy2Touch;
+  
+  vr::InputAnalogActionData_t pInputJoy3Axis;
+  vr::InputDigitalActionData_t pInputJoy3Press;
+  vr::InputDigitalActionData_t pInputJoy3Touch;
+  
+  vr::InputAnalogActionData_t pInputJoy4Axis;
+  vr::InputDigitalActionData_t pInputJoy4Press;
+  vr::InputDigitalActionData_t pInputJoy4Touch;
+
   bool sceneAppLocomotionEnabled = true;
 
   Nan::Persistent<v8::Function> fn;
@@ -44,6 +71,7 @@ public:
 
 public:
   LocomotionEngine(v8::Local<v8::Function> fn);
+  void setSceneAppLocomotionEnabled(bool enabled);
   void tick();
   static void MainThreadAsync(uv_async_t *handle);
 };

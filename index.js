@@ -69,6 +69,9 @@ async function start({
 
         qrEmitter.removeListener('qrCode', _onQrCode);
         locomotionEmitter.removeListener('locomotionInput', _onLocomotionInput);
+        
+        engine.setSceneAppLocomotionEnabled(true);
+        engine.setChaperoneTransform(null);
       });
     } else {
       s.close();
