@@ -37,7 +37,8 @@ async function start({
             break;
           }
           case 'setChaperoneTransform': {
-            const {data} = j;
+            let {data} = j;
+            data = Float32Array.from(data);
             engine.setChaperoneTransform(data);
             break;
           }
