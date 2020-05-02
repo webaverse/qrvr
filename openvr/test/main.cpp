@@ -47,28 +47,25 @@ NAN_METHOD(setChaperoneTransform) {
   vr::VRChaperoneSetup()->ShowWorkingSetPreview();
 }
 
-NAN_METHOD(wait) {
-  uint64_t m_lastFrameIndex = 0;
+NAN_METHOD(startThread) {
+  std::thread([]() -> void {
+    uint64_t m_lastFrameIndex = 0;
 
-  for (;;) {
-    {
-      uint64_t newFrameIndex = 0;
-      float lastVSync = 0;
-      // while (newFrameIndex < (m_lastFrameIndex + 3)) {
-      while (newFrameIndex == m_lastFrameIndex) {
-        vr::VRSystem()->GetTimeSinceLastVsync(&lastVSync, &newFrameIndex);
+    for (;;) {
+      {
+        uint64_t newFrameIndex = 0;
+        float lastVSync = 0;
+        // while (newFrameIndex < (m_lastFrameIndex + 3)) {
+        while (newFrameIndex == m_lastFrameIndex) {
+          vr::VRSystem()->GetTimeSinceLastVsync(&lastVSync, &newFrameIndex);
+        }
+        m_lastFrameIndex = newFrameIndex;
       }
-      m_lastFrameIndex = newFrameIndex;
+
+      qrEngine->tick();
+      tickLocomotion->tick();
     }
-  }
-}
-
-NAN_METHOD(tickQr) {
-  qrEngine->tick();
-}
-
-NAN_METHOD(tickLocomotion) {
-  tickLocomotion->tick();
+  }).detach();
 }
 
 void Init2(Local<Object> exports) {
@@ -80,9 +77,7 @@ void Init2(Local<Object> exports) {
   Nan::SetMethod(exports, "setSceneAppLocomotionEnabled", setSceneAppLocomotionEnabled);
   Nan::SetMethod(exports, "setChaperoneTransform", setChaperoneTransform);
 
-  Nan::SetMethod(exports, "wait", wait);
-  Nan::SetMethod(exports, "tickQr", tickQr);
-  Nan::SetMethod(exports, "tickLocomotion", tickLocomotion);
+  Nan::SetMethod(exports, "startThread", startThread);
 }
 
 NAN_MODULE_INIT(Init) {

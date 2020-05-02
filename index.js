@@ -17,6 +17,7 @@ async function start({
   engine.createLocomotionEngine(locomotionInput => {
     locomotionEmitter.emit('locomotionInput', locomotionInput);
   });
+  engine.startThread();
 
   const presenceWss = new ws.Server({
     noServer: true,
