@@ -36,6 +36,15 @@ async function start({
             engine.setSceneAppLocomotionEnabled(data);
             break;
           }
+          case 'setChaperoneTransform': {
+            const {data} = j;
+            engine.setChaperoneTransform(data);
+            break;
+          }
+          default: {
+            console.warn('unknown method', method);
+            break;
+          }
         }
       });
       const _onQrCode = qrCode => {
