@@ -39,7 +39,7 @@ async function start({
         }
       });
       const _onQrCode = qrCode => {
-        console.log('got qr code', qrCode);
+        // console.log('got qr code', qrCode);
         s.send(JSON.stringify({
           method: 'qrCode',
           data: qrCode,
@@ -47,7 +47,7 @@ async function start({
       };
       qrEmitter.on('qrCode', _onQrCode);
       const _onLocomotionInput = locomotionInput => {
-        console.log('got locomotion input', locomotionInput);
+        // console.log('got locomotion input', locomotionInput);
         s.send(JSON.stringify({
           method: 'locomotionInput',
           data: locomotionInput,
