@@ -35,9 +35,11 @@ NAN_METHOD(setChaperoneTransform) {
     if (matrixArray->Length() == 16) {
       Local<ArrayBuffer> arrayBuffer = matrixArray->Buffer();
       float *m = (float *)arrayBuffer->GetContents().Data();
-      vr::HmdMatrix34_t m2;
-      setPoseMatrix(m2, m);
-      vr::VRChaperoneSetup()->SetWorkingStandingZeroPoseToRawTrackingPose(&m2);
+      float m2[16];
+      getMatrixInverse(m, m2);
+      vr::HmdMatrix34_t m3;
+      setPoseMatrix(m3, m2);
+      vr::VRChaperoneSetup()->SetWorkingStandingZeroPoseToRawTrackingPose(&m3);
     } else {
       vr::VRChaperoneSetup()->RevertWorkingCopy();
     }
