@@ -5,11 +5,12 @@
 #include <locale>
 #include <codecvt>
 
-#include <windows.h>
+#include <nan.h>
+#include "openvr.h"
+
+// #include <windows.h>
 #include <wrl.h>
 #include <d3d11_4.h>
-
-#include "openvr.h"
 
 // #include "device/vr/openvr/test/out.h"
 // #include "device/vr/openvr/test/compositorproxy.h"
@@ -48,9 +49,10 @@ public:
   ID3D11InfoQueue *qrInfoQueue = nullptr;
   
   ZXing::QRCode::Reader reader;
+  Nan::Persistent<v8::Function> fn;
+  uv_async_t qrAsync;
 
   Mutex mut;
-  Semaphore sem;
   // bool running = false;
   ID3D11ShaderResourceView *pD3D11ShaderResourceViewLeft = nullptr;
   ID3D11ShaderResourceView *pD3D11ShaderResourceViewRight = nullptr;
@@ -68,13 +70,12 @@ public:
   std::vector<QrCode> qrCodes;
 
 public:
-  QrEngine();
+  QrEngine(v8::Local<v8::Function> fn);
   QrCode readQrCode(int i, ID3D11Texture2D *colorReadTex, float *viewMatrixInverse, float *projectionMatrixInverse, float eyeWidth, float eyeHeight);
   QrCode getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRight, float *viewMatrixInverseLeft, float *projectionMatrixInverseLeft, float *viewMatrixInverseRight, float *projectionMatrixInverseRight);
   void getMirrorTexture(ID3D11ShaderResourceView *pD3D11ShaderResourceView, ID3D11Texture2D *&colorReadTex);
-  void setEnabled(bool enabled);
-  void getQrCodes(std::function<void(const std::vector<QrCode> &)> cb);
   void InfoQueueLog();
+  static void MainThreadAsync(uv_async_t *handle);
 };
 
 #endif

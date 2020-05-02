@@ -4,6 +4,8 @@
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
 // #include "stb_image_write.h"
 
+using namespace v8;
+
 void CreateDevice(ID3D11Device5 **device, ID3D11DeviceContext4 **context, IDXGISwapChain **swapChain) {
   int32_t adapterIndex;
   vr::VRSystem()->GetDXGIOutputInfo(&adapterIndex);
@@ -117,13 +119,18 @@ vr::HmdMatrix44_t GetProjectionMatrix(vr::EVREye eye) {
   return vr::VRSystem()->GetProjectionMatrix(eye, zNear, zFar);
 }
 
-int frameId = 0;
-QrEngine::QrEngine() :
-  reader(ZXing::DecodeHints().setTryHarder(true).setTryRotate(true))
+// int frameId = 0;
+QrEngine::QrEngine(Local<Function> fn) :
+  reader(ZXing::DecodeHints().setTryHarder(true).setTryRotate(true)),
+  fn(fn)
 {
   // getOut() << "qr cons 1 " << hmdError << std::endl;
   CreateDevice(&qrDevice, &qrContext, &qrSwapChain);
   // getOut() << "qr cons 2" << std::endl;
+
+  uv_loop_t *loop = node::GetCurrentEventLoop(Isolate::GetCurrent());
+  uv_async_init(loop, &qrAsync, MainThreadAsync);
+  qrAsync.data = this;
   
   HRESULT hr = qrDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&qrInfoQueue);
   if (SUCCEEDED(hr)) {
@@ -232,7 +239,7 @@ QrEngine::QrEngine() :
 
         qrCodes.clear();
       }
-      sem.unlock();
+      uv_async_send(&qrAsync);
     }
   }).detach();
 }
@@ -435,12 +442,6 @@ QrCode QrEngine::getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRi
   }
   return qrCode;
 }
-void QrEngine::getQrCodes(std::function<void(const std::vector<QrCode> &)> cb) {
-  sem.lock();
-
-  std::lock_guard<Mutex> lock(mut);
-  cb(qrCodes);
-}
 void QrEngine::InfoQueueLog() {
   if (qrInfoQueue) {
     ID3D11InfoQueue *infoQueue = qrInfoQueue;
@@ -475,4 +476,35 @@ void QrEngine::InfoQueueLog() {
     }
     infoQueue->ClearStoredMessages();
   }
+}
+void QrEngine::MainThreadAsync(uv_async_t *handle) {
+  QrEngine *self = (QrEngine *)handle->data;
+
+  std::lock_guard<Mutex> lock(self->mut);
+  Nan::HandleScope scope;
+
+  Local<Function> localFn = Nan::New(self->fn);
+  Local<Array> array = Nan::New<Array>();
+  for (const auto &qrCode : self->qrCodes) {
+    Local<Object> object = Nan::New<Object>();
+    
+    Local<Array> points = Nan::New<Array>(4);
+    for (size_t i = 0; i < 4; i++) {
+      Local<Array> point = Nan::New<Array>(3);
+      for (size_t j = 0; j < 3; j++) {
+        point->Set(Nan::GetCurrentContext(), Nan::New<Number>(j), Nan::New<Number>(qrCode.points[i*3+j]));
+      }
+      points->Set(Nan::GetCurrentContext(), Nan::New<Number>(i), point);
+    }
+    object->Set(Nan::GetCurrentContext(), v8::String::NewFromUtf8(Isolate::GetCurrent(), "points").ToLocalChecked(), points);
+
+    Local<String> text = String::NewFromUtf8(Isolate::GetCurrent(), qrCode.data.c_str()).ToLocalChecked();
+    object->Set(Nan::GetCurrentContext(), v8::String::NewFromUtf8(Isolate::GetCurrent(), "text").ToLocalChecked(), text);
+    
+    array->Set(Nan::GetCurrentContext(), array->Length(), object);
+  }
+  Local<Value> args[] = {
+    array,
+  };
+  localFn->Call(Isolate::GetCurrent()->GetCurrentContext(), Nan::Null(), ARRAYSIZE(args), args);
 }

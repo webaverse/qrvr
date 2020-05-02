@@ -4,7 +4,11 @@
 #include <cmath>
 #define M_PI 3.14159265358979323846264338327950288
 
-LocomotionEngine::LocomotionEngine() {
+using namespace v8;
+
+LocomotionEngine::LocomotionEngine(Local<Function> fn) :
+  fn(fn)
+{
   char dir[MAX_PATH];
   GetCurrentDirectory(sizeof(dir), dir);
   std::string dirString(dir);
@@ -15,8 +19,12 @@ LocomotionEngine::LocomotionEngine() {
   err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Press", &pActionJoy1Press);
   err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Touch", &pActionJoy1Touch);
   err = vr::VRInput()->GetActionHandle("/actions/main/in/Joy1Axis", &pActionJoy1Axis);
+  
+  uv_loop_t *loop = node::GetCurrentEventLoop(Isolate::GetCurrent());
+  uv_async_init(loop, &locomotionAsync, MainThreadAsync);
+  locomotionAsync.data = this;
 
-  std::thread([=]() -> void {
+  std::thread([this]() -> void {
     uint64_t m_lastFrameIndex = 0;
 
     for (;;) {
@@ -57,23 +65,29 @@ LocomotionEngine::LocomotionEngine() {
         vr::VRChaperoneSetup()->SetWorkingStandingZeroPoseToRawTrackingPose(&m2);
         vr::VRChaperoneSetup()->ShowWorkingSetPreview();
       }
-      sem.unlock();
+      uv_async_send(&locomotionAsync);
     }
   }).detach();
 }
-void LocomotionEngine::getLocomotionInputs(std::function<void(float *locomotionInputs)> cb) {
-  sem.lock();
+void LocomotionEngine::MainThreadAsync(uv_async_t *handle) {
+  LocomotionEngine *self = (LocomotionEngine *)handle->data;
 
-  std::lock_guard<Mutex> lock(mut);
-  if (!sceneAppLocomotionEnabled) {
-    float m[5];
-    m[0] = pInputJoy1Axis.x;
-    m[1] = pInputJoy1Axis.y;
-    m[2] = pInputJoy1Axis.z;
-    m[3] = pInputJoy1Press.bState ? 1.0f : 0.0f;
-    m[4] = pInputJoy1Touch.bState ? 1.0f : 0.0f;
-    cb(m);
+  std::lock_guard<Mutex> lock(self->mut);
+  Nan::HandleScope scope;
+
+  Local<Function> localFn = Nan::New(self->fn);
+  if (!self->sceneAppLocomotionEnabled) {
+    Local<Array> array = Nan::New<Array>();
+    array->Set(Nan::GetCurrentContext(), Nan::New<Number>(0), Nan::New<Number>(self->pInputJoy1Axis.x));
+    array->Set(Nan::GetCurrentContext(), Nan::New<Number>(1), Nan::New<Number>(self->pInputJoy1Axis.y));
+    array->Set(Nan::GetCurrentContext(), Nan::New<Number>(2), Nan::New<Number>(self->pInputJoy1Axis.z));
+    array->Set(Nan::GetCurrentContext(), Nan::New<Number>(3), Nan::New<Number>(self->pInputJoy1Press.bState ? 1.0f : 0.0f));
+    array->Set(Nan::GetCurrentContext(), Nan::New<Number>(4), Nan::New<Number>(self->pInputJoy1Touch.bState ? 1.0f : 0.0f));
+    Local<Value> args[] = {
+      array,
+    };
+    localFn->Call(Isolate::GetCurrent()->GetCurrentContext(), Nan::Null(), ARRAYSIZE(args), args);
   } else {
-    cb(nullptr);
+    localFn->Call(Isolate::GetCurrent()->GetCurrentContext(), Nan::Null(), 0, nullptr);
   }
 }

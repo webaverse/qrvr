@@ -38,18 +38,20 @@ async function start({
         }
       });
       const _onQrCode = qrCode => {
+        console.log('got qr code', qrCode);
         s.send(JSON.stringify({
           method: 'qrCode',
-          datta: qrCode,
+          data: qrCode,
         }));
-      });
+      };
       qrEmitter.on('qrCode', _onQrCode);
-      const _onLocomotionInput = qrCode => {
+      const _onLocomotionInput = locomotionInput => {
+        console.log('got locomotion input', locomotionInput);
         s.send(JSON.stringify({
           method: 'locomotionInput',
-          datta: qrCode,
+          data: locomotionInput,
         }));
-      });
+      };
       locomotionEmitter.on('locomotionInput', _onLocomotionInput);
       s.once('close', () => {
         live = false;

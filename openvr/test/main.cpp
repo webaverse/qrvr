@@ -1,5 +1,3 @@
-#include <nan.h>
-
 #include "matrix.h"
 #include "qr.h"
 #include "locomotion.h"
@@ -13,56 +11,23 @@ NAN_METHOD(initVr) {
 
 std::unique_ptr<QrEngine> qrEngine;
 NAN_METHOD(createQrEngine) {
-  qrEngine.reset(new QrEngine());
-}
-NAN_METHOD(getQrCodes) {
-  Local<Array> array = Nan::New<Array>();
-
-  qrEngine->getQrCodes([&](const std::vector<QrCode> &qrCodes) -> void {
-    for (const auto &qrCode : qrCodes) {
-      Local<Object> object = Nan::New<Object>();
-      
-      Local<Array> points = Nan::New<Array>(4);
-      for (size_t i = 0; i < 4; i++) {
-        Local<Array> point = Nan::New<Array>(3);
-        for (size_t j = 0; j < 3; j++) {
-          point->Set(Nan::GetCurrentContext(), Nan::New<Number>(j), Nan::New<Number>(qrCode.points[i*3+j]));
-        }
-        points->Set(Nan::GetCurrentContext(), Nan::New<Number>(i), point);
-      }
-      object->Set(Nan::GetCurrentContext(), v8::String::NewFromUtf8(Isolate::GetCurrent(), "points").ToLocalChecked(), points);
-
-      Local<String> text = String::NewFromUtf8(Isolate::GetCurrent(), qrCode.data.c_str()).ToLocalChecked();
-      object->Set(Nan::GetCurrentContext(), v8::String::NewFromUtf8(Isolate::GetCurrent(), "text").ToLocalChecked(), text);
-      
-      array->Set(Nan::GetCurrentContext(), array->Length(), object);
-    }
-  });
-  
-  info.GetReturnValue().Set(array);
+  if (info.Length() > 0 && info[0]->IsFunction()) {
+    Local<Function> fn = Local<Function>::Cast(info[0]);
+    qrEngine.reset(new QrEngine(fn));
+  }
 }
 
 std::unique_ptr<LocomotionEngine> locomotionEngine;
 NAN_METHOD(createLocomotionEngine) {
-  locomotionEngine.reset(new LocomotionEngine());
+  if (info.Length() > 0 && info[0]->IsFunction()) {
+    Local<Function> fn = Local<Function>::Cast(info[0]);
+    locomotionEngine.reset(new LocomotionEngine(fn));
+  }
 }
 NAN_METHOD(setSceneAppLocomotionEnabled) {
   if (info.Length() > 0 && info[0]->IsBoolean()) {
     locomotionEngine->sceneAppLocomotionEnabled = info[0]->BooleanValue(Isolate::GetCurrent());
   }
-}
-NAN_METHOD(getLocomotionInputs) {
-  Local<Array> array = Nan::New<Array>();
-
-  locomotionEngine->getLocomotionInputs([&](float *locomotionInputs) -> void {
-    if (locomotionInputs) {
-      for (int i = 0; i < 5; i++) {
-        array->Set(Nan::GetCurrentContext(), Nan::New<Number>(i), Nan::New<Number>(locomotionInputs[i]));
-      }
-    }
-  });
-
-  info.GetReturnValue().Set(array);
 }
 NAN_METHOD(setChaperoneTransform) {
   if (info.Length() > 0 && info[0]->IsFloat32Array()) {
@@ -86,11 +51,9 @@ void Init2(Local<Object> exports) {
   Nan::SetMethod(exports, "initVr", initVr);
 
   Nan::SetMethod(exports, "createQrEngine", createQrEngine);
-  Nan::SetMethod(exports, "getQrCodes", getQrCodes);
 
   Nan::SetMethod(exports, "createLocomotionEngine", createLocomotionEngine);
   Nan::SetMethod(exports, "setSceneAppLocomotionEnabled", setSceneAppLocomotionEnabled);
-  Nan::SetMethod(exports, "getLocomotionInputs", getLocomotionInputs);
   Nan::SetMethod(exports, "setChaperoneTransform", setChaperoneTransform);
 }
 

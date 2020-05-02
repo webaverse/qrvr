@@ -5,11 +5,12 @@
 #include <locale>
 #include <codecvt>
 
-#include <windows.h>
+#include <nan.h>
+#include "openvr.h"
+
+// #include <windows.h>
 #include <wrl.h>
 #include <d3d11_4.h>
-
-#include "openvr.h"
 
 // #include "device/vr/openvr/test/out.h"
 // #include "device/vr/openvr/test/compositorproxy.h"
@@ -22,7 +23,7 @@
 
 #include "./fnproxy.h"
 
-// using namespace cv;
+// using namespace v8;
 
 class LocomotionEngine {
 public:
@@ -35,12 +36,14 @@ public:
   vr::InputDigitalActionData_t pInputJoy1Touch;
   bool sceneAppLocomotionEnabled = false;
 
+  Nan::Persistent<v8::Function> fn;
+  uv_async_t locomotionAsync;
+
   Mutex mut;
-  Semaphore sem;
 
 public:
-  LocomotionEngine();
-  void getLocomotionInputs(std::function<void(float *locomotionInputs)> cb);
+  LocomotionEngine(v8::Local<v8::Function> fn);
+  static void MainThreadAsync(uv_async_t *handle);
 };
 
 #endif
