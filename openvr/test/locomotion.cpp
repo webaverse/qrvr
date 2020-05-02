@@ -25,35 +25,37 @@ LocomotionEngine::LocomotionEngine(Local<Function> fn) :
   locomotionAsync.data = this;
 }
 void LocomotionEngine::tick() {
-  {
-    vr::VRActiveActionSet_t actionSet{};
-    actionSet.ulActionSet = pActionSetHandle;
-    actionSet.nPriority = vr::k_nActionSetOverlayGlobalPriorityMax;
-    vr::EVRInputError err = vr::VRInput()->UpdateActionState(&actionSet, sizeof(actionSet), 1);
+  if (!sceneAppLocomotionEnabled) {
+    {
+      vr::VRActiveActionSet_t actionSet{};
+      actionSet.ulActionSet = pActionSetHandle;
+      actionSet.nPriority = vr::k_nActionSetOverlayGlobalPriorityMax;
+      vr::EVRInputError err = vr::VRInput()->UpdateActionState(&actionSet, sizeof(actionSet), 1);
 
-    err = vr::VRInput()->GetAnalogActionData(pActionJoy1Axis, &pInputJoy1Axis, sizeof(pInputJoy1Axis), vr::k_ulInvalidInputValueHandle);
-    err = vr::VRInput()->GetDigitalActionData(pActionJoy1Press, &pInputJoy1Press, sizeof(pInputJoy1Press), vr::k_ulInvalidInputValueHandle);
-    err = vr::VRInput()->GetDigitalActionData(pActionJoy1Touch, &pInputJoy1Touch, sizeof(pInputJoy1Touch ), vr::k_ulInvalidInputValueHandle);
+      err = vr::VRInput()->GetAnalogActionData(pActionJoy1Axis, &pInputJoy1Axis, sizeof(pInputJoy1Axis), vr::k_ulInvalidInputValueHandle);
+      err = vr::VRInput()->GetDigitalActionData(pActionJoy1Press, &pInputJoy1Press, sizeof(pInputJoy1Press), vr::k_ulInvalidInputValueHandle);
+      err = vr::VRInput()->GetDigitalActionData(pActionJoy1Touch, &pInputJoy1Touch, sizeof(pInputJoy1Touch ), vr::k_ulInvalidInputValueHandle);
+    }
+    {      
+      std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+      );
+      
+      float v = 5.0f * (1.0f + std::sin((float)(ms.count() % 2000) / 2000.0f * (float)M_PI * 2.0f) / 2.0f);
+      // d += 0.1;
+      float m[16] = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, -v, 0, 1,
+      };
+      vr::HmdMatrix34_t m2;
+      setPoseMatrix(m2, m);
+      vr::VRChaperoneSetup()->SetWorkingStandingZeroPoseToRawTrackingPose(&m2);
+      vr::VRChaperoneSetup()->ShowWorkingSetPreview();
+    }
+    uv_async_send(&locomotionAsync);
   }
-  {      
-    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::system_clock::now().time_since_epoch()
-    );
-    
-    float v = 5.0f * (1.0f + std::sin((float)(ms.count() % 2000) / 2000.0f * (float)M_PI * 2.0f) / 2.0f);
-    // d += 0.1;
-    float m[16] = {
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, -v, 0, 1,
-    };
-    vr::HmdMatrix34_t m2;
-    setPoseMatrix(m2, m);
-    vr::VRChaperoneSetup()->SetWorkingStandingZeroPoseToRawTrackingPose(&m2);
-    vr::VRChaperoneSetup()->ShowWorkingSetPreview();
-  }
-  uv_async_send(&locomotionAsync);
 }
 void LocomotionEngine::MainThreadAsync(uv_async_t *handle) {
   LocomotionEngine *self = (LocomotionEngine *)handle->data;
