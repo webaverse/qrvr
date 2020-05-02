@@ -172,8 +172,6 @@ void QrEngine::getMirrorTexture(ID3D11ShaderResourceView *pD3D11ShaderResourceVi
   // InfoQueueLog();
 
   if (!colorReadTexLeft || desc.Width != colorBufferDesc.Width || desc.Height != colorBufferDesc.Height) {
-    getOut() << "thread 5" << std::endl;
-    
     colorBufferDesc = desc;
 
     D3D11_TEXTURE2D_DESC readDesc = desc;
