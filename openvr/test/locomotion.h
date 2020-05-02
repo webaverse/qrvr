@@ -40,9 +40,11 @@ public:
   uv_async_t locomotionAsync;
 
   Mutex mut;
+  Semaphore sem;
 
 public:
   LocomotionEngine(v8::Local<v8::Function> fn);
+  void tick();
   static void MainThreadAsync(uv_async_t *handle);
 };
 

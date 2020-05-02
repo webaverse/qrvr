@@ -150,98 +150,6 @@ QrEngine::QrEngine(Local<Function> fn) :
     getOut() << "failed to get mirror texture " << err << " " << (void *)pD3D11ShaderResourceViewRight << std::endl;
     // abort();
   }
-  
-  std::thread([this]() -> void {
-    for (;;) {
-      // getOut() << "thread 1" << std::endl;
-      
-      /* vr::TrackedDevicePose_t rRenderPoses[vr::k_unMaxTrackedDeviceCount];
-      if (openvr_->GetCompositor()->CanRenderScene() == false)
-            return; */
-      {
-        uint64_t newFrameIndex = 0;
-        float lastVSync = 0;
-        while (newFrameIndex == m_lastFrameIndex) {
-          vr::VRSystem()->GetTimeSinceLastVsync(&lastVSync, &newFrameIndex);
-        }
-
-        /* if (m_lastFrameIndex + 1 < newFrameIndex)
-              m_framesSkipped++; */
-
-        m_lastFrameIndex = newFrameIndex;
-      }
-      
-      // getOut() << "thread 2" << std::endl;
-
-      // read mirror texture
-      getMirrorTexture(pD3D11ShaderResourceViewLeft, colorReadTexLeft);
-      getMirrorTexture(pD3D11ShaderResourceViewRight, colorReadTexRight);
-      
-      // getOut() << "thread 8" << std::endl;
-
-      vr::HmdMatrix34_t viewMatrixHmd = GetHmdViewMatrix();
-      float viewMatrixHmdInverse[16];
-      setPoseMatrix(viewMatrixHmdInverse, viewMatrixHmd);
-
-      float viewMatrixEyeInverseLeft[16];
-      vr::HmdMatrix34_t viewMatrixEyeLeft = GetEyeViewMatrix(vr::Eye_Left);
-      setPoseMatrix(viewMatrixEyeInverseLeft, viewMatrixEyeLeft);
-      float viewMatrixInverseLeft[16];
-      multiplyMatrices(viewMatrixHmdInverse, viewMatrixEyeInverseLeft, viewMatrixInverseLeft);
-
-      float viewMatrixEyeInverseRight[16];
-      vr::HmdMatrix34_t viewMatrixEyeRight = GetEyeViewMatrix(vr::Eye_Right);
-      setPoseMatrix(viewMatrixEyeInverseRight, viewMatrixEyeRight);
-      float viewMatrixInverseRight[16];
-      multiplyMatrices(viewMatrixHmdInverse, viewMatrixEyeInverseRight, viewMatrixInverseRight);
-
-      vr::HmdMatrix44_t projectionMatrixHmdLeft = GetProjectionMatrix(vr::Eye_Left);
-      float projectionMatrixLeft[16];
-      setPoseMatrix(projectionMatrixLeft, projectionMatrixHmdLeft);
-      float projectionMatrixInverseLeft[16];
-      getMatrixInverse(projectionMatrixLeft, projectionMatrixInverseLeft);
-
-      vr::HmdMatrix44_t projectionMatrixHmdRight = GetProjectionMatrix(vr::Eye_Right);
-      float projectionMatrixRight[16];
-      setPoseMatrix(projectionMatrixRight, projectionMatrixHmdRight);
-      float projectionMatrixInverseRight[16];
-      getMatrixInverse(projectionMatrixRight, projectionMatrixInverseRight);
-
-      float eyeWidth = (float)colorBufferDesc.Width;
-      float eyeHeight = (float)colorBufferDesc.Height;
-      QrCode qrCodeLeft = readQrCode(0, colorReadTexLeft, viewMatrixInverseLeft, projectionMatrixInverseLeft, eyeWidth, eyeHeight);
-      QrCode qrCodeRight = readQrCode(1, colorReadTexRight, viewMatrixInverseRight, projectionMatrixInverseRight, eyeWidth, eyeHeight);
-      if (qrCodeLeft.data.length() > 0 && qrCodeLeft.data == qrCodeRight.data) {
-        QrCode qrCodeDepth = getQrCodeDepth(qrCodeLeft, qrCodeRight, viewMatrixInverseLeft, projectionMatrixInverseLeft, viewMatrixInverseRight, projectionMatrixInverseRight);
-
-        {
-          std::lock_guard<Mutex> lock(mut);
-
-          /* getOut() << "Decoded QR code: " << data << " " <<
-            bbox.at<cv::Point2f>(0).x << " " << bbox.at<cv::Point2f>(0).y << " " <<
-            bbox.at<cv::Point2f>(1).x << " " << bbox.at<cv::Point2f>(1).y << " " <<
-            bbox.at<cv::Point2f>(2).x << " " << bbox.at<cv::Point2f>(2).y << " " <<
-            bbox.at<cv::Point2f>(3).x << " " << bbox.at<cv::Point2f>(3).y << " " <<
-            std::endl; */
-
-          qrCodes.resize(1);
-          QrCode &qrCode = qrCodes[0];
-          qrCode.data = std::move(qrCodeDepth.data);
-          
-          for (int i = 0; i < 4; i++) {
-            qrCode.points[i*3] = qrCodeDepth.points[i*3];
-            qrCode.points[i*3+1] = qrCodeDepth.points[i*3+1];
-            qrCode.points[i*3+2] = qrCodeDepth.points[i*3+2];
-          }
-        }
-      } else {
-        std::lock_guard<Mutex> lock(mut);
-
-        qrCodes.clear();
-      }
-      uv_async_send(&qrAsync);
-    }
-  }).detach();
 }
 void QrEngine::getMirrorTexture(ID3D11ShaderResourceView *pD3D11ShaderResourceViewLeft, ID3D11Texture2D *&colorReadTexLeft) {
   HRESULT hr;
@@ -476,6 +384,75 @@ void QrEngine::InfoQueueLog() {
     }
     infoQueue->ClearStoredMessages();
   }
+}
+void QrEngine::tick() {
+  // read mirror texture
+  getMirrorTexture(pD3D11ShaderResourceViewLeft, colorReadTexLeft);
+  getMirrorTexture(pD3D11ShaderResourceViewRight, colorReadTexRight);
+  
+  // getOut() << "thread 8" << std::endl;
+
+  vr::HmdMatrix34_t viewMatrixHmd = GetHmdViewMatrix();
+  float viewMatrixHmdInverse[16];
+  setPoseMatrix(viewMatrixHmdInverse, viewMatrixHmd);
+
+  float viewMatrixEyeInverseLeft[16];
+  vr::HmdMatrix34_t viewMatrixEyeLeft = GetEyeViewMatrix(vr::Eye_Left);
+  setPoseMatrix(viewMatrixEyeInverseLeft, viewMatrixEyeLeft);
+  float viewMatrixInverseLeft[16];
+  multiplyMatrices(viewMatrixHmdInverse, viewMatrixEyeInverseLeft, viewMatrixInverseLeft);
+
+  float viewMatrixEyeInverseRight[16];
+  vr::HmdMatrix34_t viewMatrixEyeRight = GetEyeViewMatrix(vr::Eye_Right);
+  setPoseMatrix(viewMatrixEyeInverseRight, viewMatrixEyeRight);
+  float viewMatrixInverseRight[16];
+  multiplyMatrices(viewMatrixHmdInverse, viewMatrixEyeInverseRight, viewMatrixInverseRight);
+
+  vr::HmdMatrix44_t projectionMatrixHmdLeft = GetProjectionMatrix(vr::Eye_Left);
+  float projectionMatrixLeft[16];
+  setPoseMatrix(projectionMatrixLeft, projectionMatrixHmdLeft);
+  float projectionMatrixInverseLeft[16];
+  getMatrixInverse(projectionMatrixLeft, projectionMatrixInverseLeft);
+
+  vr::HmdMatrix44_t projectionMatrixHmdRight = GetProjectionMatrix(vr::Eye_Right);
+  float projectionMatrixRight[16];
+  setPoseMatrix(projectionMatrixRight, projectionMatrixHmdRight);
+  float projectionMatrixInverseRight[16];
+  getMatrixInverse(projectionMatrixRight, projectionMatrixInverseRight);
+
+  float eyeWidth = (float)colorBufferDesc.Width;
+  float eyeHeight = (float)colorBufferDesc.Height;
+  QrCode qrCodeLeft = readQrCode(0, colorReadTexLeft, viewMatrixInverseLeft, projectionMatrixInverseLeft, eyeWidth, eyeHeight);
+  QrCode qrCodeRight = readQrCode(1, colorReadTexRight, viewMatrixInverseRight, projectionMatrixInverseRight, eyeWidth, eyeHeight);
+  if (qrCodeLeft.data.length() > 0 && qrCodeLeft.data == qrCodeRight.data) {
+    QrCode qrCodeDepth = getQrCodeDepth(qrCodeLeft, qrCodeRight, viewMatrixInverseLeft, projectionMatrixInverseLeft, viewMatrixInverseRight, projectionMatrixInverseRight);
+
+    {
+      std::lock_guard<Mutex> lock(mut);
+
+      /* getOut() << "Decoded QR code: " << data << " " <<
+        bbox.at<cv::Point2f>(0).x << " " << bbox.at<cv::Point2f>(0).y << " " <<
+        bbox.at<cv::Point2f>(1).x << " " << bbox.at<cv::Point2f>(1).y << " " <<
+        bbox.at<cv::Point2f>(2).x << " " << bbox.at<cv::Point2f>(2).y << " " <<
+        bbox.at<cv::Point2f>(3).x << " " << bbox.at<cv::Point2f>(3).y << " " <<
+        std::endl; */
+
+      qrCodes.resize(1);
+      QrCode &qrCode = qrCodes[0];
+      qrCode.data = std::move(qrCodeDepth.data);
+      
+      for (int i = 0; i < 4; i++) {
+        qrCode.points[i*3] = qrCodeDepth.points[i*3];
+        qrCode.points[i*3+1] = qrCodeDepth.points[i*3+1];
+        qrCode.points[i*3+2] = qrCodeDepth.points[i*3+2];
+      }
+    }
+  } else {
+    std::lock_guard<Mutex> lock(mut);
+
+    qrCodes.clear();
+  }
+  uv_async_send(&qrAsync);
 }
 void QrEngine::MainThreadAsync(uv_async_t *handle) {
   QrEngine *self = (QrEngine *)handle->data;

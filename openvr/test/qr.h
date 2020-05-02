@@ -75,6 +75,7 @@ public:
   QrCode getQrCodeDepth(const QrCode &qrCodeLeft, const QrCode &qrCodeRight, float *viewMatrixInverseLeft, float *projectionMatrixInverseLeft, float *viewMatrixInverseRight, float *projectionMatrixInverseRight);
   void getMirrorTexture(ID3D11ShaderResourceView *pD3D11ShaderResourceView, ID3D11Texture2D *&colorReadTex);
   void InfoQueueLog();
+  void tick();
   static void MainThreadAsync(uv_async_t *handle);
 };
 
