@@ -63,7 +63,7 @@ NAN_METHOD(startThread) {
       }
 
       qrEngine->tick();
-      tickLocomotion->tick();
+      locomotionEngine->tick();
     }
   }).detach();
 }
