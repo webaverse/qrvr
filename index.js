@@ -38,7 +38,9 @@ async function start({
           }
           case 'setChaperoneTransform': {
             let {data} = j;
-            data = Float32Array.from(data);
+            if (data) {
+              data = Float32Array.from(data);
+            }
             engine.setChaperoneTransform(data);
             break;
           }
