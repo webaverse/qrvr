@@ -2,11 +2,11 @@
   "default_bindings": [
      {
         "controller_type" : "knuckles",
-        "binding_url" : "hellovr_bindings_knuckles.json"
+        "binding_url" : "bindings_knuckles.json"
      },
      {
         "controller_type" : "generic",
-        "binding_url" : "hellovr_bindings_generic.json"
+        "binding_url" : "bindings_generic.json"
      }
   ],
   "actions": [

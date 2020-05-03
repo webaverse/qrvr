@@ -12,7 +12,7 @@ LocomotionEngine::LocomotionEngine(Local<Function> fn) :
   char dir[MAX_PATH];
   GetCurrentDirectory(sizeof(dir), dir);
   std::string dirString(dir);
-  dirString += "\\openvr\\test\\actions.json";
+  dirString += "\\actions.json";
   vr::EVRInputError err = vr::VRInput()->SetActionManifestPath(dirString.c_str());
 
   err = vr::VRInput()->GetActionSetHandle("/actions/main", &pActionSetHandle);

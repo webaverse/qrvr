@@ -17,7 +17,10 @@
     "index.js",
     "index.html",
     "node_modules/",
-    "build/"
+    "build/",
+    "actions.json",
+    "bindings_generic.json",
+    "bindings_knuckles.json"
   ],
   "dependencies": {
     "express": "^4.17.1",
