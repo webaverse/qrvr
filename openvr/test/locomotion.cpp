@@ -47,22 +47,26 @@ void LocomotionEngine::tick() {
     actionSet.nPriority = vr::k_nActionSetOverlayGlobalPriorityMax;
   }
   vr::EVRInputError err = vr::VRInput()->UpdateActionState(&actionSet, sizeof(actionSet), 1);
-  
-  err = vr::VRInput()->GetAnalogActionData(pActionJoy1Axis, &pInputJoy1Axis, sizeof(pInputJoy1Axis), vr::k_ulInvalidInputValueHandle);
-  err = vr::VRInput()->GetDigitalActionData(pActionJoy1Press, &pInputJoy1Press, sizeof(pInputJoy1Press), vr::k_ulInvalidInputValueHandle);
-  err = vr::VRInput()->GetDigitalActionData(pActionJoy1Touch, &pInputJoy1Touch, sizeof(pInputJoy1Touch ), vr::k_ulInvalidInputValueHandle);
-  
-  err = vr::VRInput()->GetAnalogActionData(pActionJoy2Axis, &pInputJoy2Axis, sizeof(pInputJoy2Axis), vr::k_ulInvalidInputValueHandle);
-  err = vr::VRInput()->GetDigitalActionData(pActionJoy2Press, &pInputJoy2Press, sizeof(pInputJoy2Press), vr::k_ulInvalidInputValueHandle);
-  err = vr::VRInput()->GetDigitalActionData(pActionJoy2Touch, &pInputJoy2Touch, sizeof(pInputJoy2Touch), vr::k_ulInvalidInputValueHandle);
-  
-  err = vr::VRInput()->GetAnalogActionData(pActionJoy3Axis, &pInputJoy3Axis, sizeof(pInputJoy3Axis), vr::k_ulInvalidInputValueHandle);
-  err = vr::VRInput()->GetDigitalActionData(pActionJoy3Press, &pInputJoy3Press, sizeof(pInputJoy3Press), vr::k_ulInvalidInputValueHandle);
-  err = vr::VRInput()->GetDigitalActionData(pActionJoy3Touch, &pInputJoy3Touch, sizeof(pInputJoy3Touch ), vr::k_ulInvalidInputValueHandle);
-  
-  err = vr::VRInput()->GetAnalogActionData(pActionJoy4Axis, &pInputJoy4Axis, sizeof(pInputJoy4Axis), vr::k_ulInvalidInputValueHandle);
-  err = vr::VRInput()->GetDigitalActionData(pActionJoy4Press, &pInputJoy4Press, sizeof(pInputJoy4Press), vr::k_ulInvalidInputValueHandle);
-  err = vr::VRInput()->GetDigitalActionData(pActionJoy4Touch, &pInputJoy4Touch, sizeof(pInputJoy4Touch), vr::k_ulInvalidInputValueHandle);
+
+  {
+    std::lock_guard<Mutex> lock(mut);
+
+    err = vr::VRInput()->GetAnalogActionData(pActionJoy1Axis, &pInputJoy1Axis, sizeof(pInputJoy1Axis), vr::k_ulInvalidInputValueHandle);
+    err = vr::VRInput()->GetDigitalActionData(pActionJoy1Press, &pInputJoy1Press, sizeof(pInputJoy1Press), vr::k_ulInvalidInputValueHandle);
+    err = vr::VRInput()->GetDigitalActionData(pActionJoy1Touch, &pInputJoy1Touch, sizeof(pInputJoy1Touch ), vr::k_ulInvalidInputValueHandle);
+    
+    err = vr::VRInput()->GetAnalogActionData(pActionJoy2Axis, &pInputJoy2Axis, sizeof(pInputJoy2Axis), vr::k_ulInvalidInputValueHandle);
+    err = vr::VRInput()->GetDigitalActionData(pActionJoy2Press, &pInputJoy2Press, sizeof(pInputJoy2Press), vr::k_ulInvalidInputValueHandle);
+    err = vr::VRInput()->GetDigitalActionData(pActionJoy2Touch, &pInputJoy2Touch, sizeof(pInputJoy2Touch), vr::k_ulInvalidInputValueHandle);
+    
+    err = vr::VRInput()->GetAnalogActionData(pActionJoy3Axis, &pInputJoy3Axis, sizeof(pInputJoy3Axis), vr::k_ulInvalidInputValueHandle);
+    err = vr::VRInput()->GetDigitalActionData(pActionJoy3Press, &pInputJoy3Press, sizeof(pInputJoy3Press), vr::k_ulInvalidInputValueHandle);
+    err = vr::VRInput()->GetDigitalActionData(pActionJoy3Touch, &pInputJoy3Touch, sizeof(pInputJoy3Touch ), vr::k_ulInvalidInputValueHandle);
+    
+    err = vr::VRInput()->GetAnalogActionData(pActionJoy4Axis, &pInputJoy4Axis, sizeof(pInputJoy4Axis), vr::k_ulInvalidInputValueHandle);
+    err = vr::VRInput()->GetDigitalActionData(pActionJoy4Press, &pInputJoy4Press, sizeof(pInputJoy4Press), vr::k_ulInvalidInputValueHandle);
+    err = vr::VRInput()->GetDigitalActionData(pActionJoy4Touch, &pInputJoy4Touch, sizeof(pInputJoy4Touch), vr::k_ulInvalidInputValueHandle);
+  }
   
   if (!sceneAppLocomotionEnabled) {
     uv_async_send(&locomotionAsync);
