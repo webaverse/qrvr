@@ -20,7 +20,8 @@
     "build/",
     "actions.json",
     "bindings_generic.json",
-    "bindings_knuckles.json"
+    "bindings_knuckles.json",
+    "bindings_oculus_touch.json"
   ],
   "dependencies": {
     "express": "^4.17.1",
