@@ -1,0 +1,41 @@
+{
+   "bindings" : {
+      "/actions/main" : {
+         "sources" : [
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/main/in/Joy1Press"
+                  },
+                  "position" : {
+                     "output" : "/actions/main/in/Joy1Axis"
+                  },
+                  "touch" : {
+                     "output" : "/actions/main/in/Joy1Touch"
+                  }
+               },
+               "mode" : "joystick",
+               "path" : "/user/hand/left/input/joystick"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/main/in/Joy3Press"
+                  },
+                  "position" : {
+                     "output" : "/actions/main/in/Joy3Axis"
+                  },
+                  "touch" : {
+                     "output" : "/actions/main/in/Joy3Touch"
+                  }
+               },
+               "mode" : "joystick",
+               "path" : "/user/hand/right/input/joystick"
+            }
+          ]
+      }
+   },
+   "controller_type" : "oculus_touch",
+   "description" : "Oculus touch",
+   "name" : "oculus_touch"
+}
