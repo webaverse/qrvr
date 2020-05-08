@@ -7,6 +7,7 @@ const engine = require('./build/Release/qr.node');
 
 async function start({
   port = 8000,
+  key,
 } = {}) {
   engine.initVr();
   const qrEmitter = new EventEmitter();
@@ -23,6 +24,7 @@ async function start({
     noServer: true,
   });
   let live = false;
+  let authed = typeof key !== 'string';
   presenceWss.on('connection', (s, req) => {
     if (!live) {
       live = true;
@@ -31,6 +33,12 @@ async function start({
         const j = JSON.parse(s);
         const {method} = j;
         switch (method) {
+          case 'init': {
+            if (!authed) {
+              authed = j.key === key;
+            }
+            break;
+          }
           case 'setSceneAppLocomotionEnabled': {
             const {data} = j;
             engine.setSceneAppLocomotionEnabled(data);
@@ -51,17 +59,21 @@ async function start({
         }
       });
       const _onQrCode = qrCode => {
-        s.send(JSON.stringify({
-          method: 'qrCode',
-          data: qrCode,
-        }));
+        if (authed) {
+          s.send(JSON.stringify({
+            method: 'qrCode',
+            data: qrCode,
+          }));
+        }
       };
       qrEmitter.on('qrCode', _onQrCode);
       const _onLocomotionInput = locomotionInput => {
-        s.send(JSON.stringify({
-          method: 'locomotionInput',
-          data: locomotionInput,
-        }));
+        if (authed) {
+          s.send(JSON.stringify({
+            method: 'locomotionInput',
+            data: locomotionInput,
+          }));
+        }
       };
       locomotionEmitter.on('locomotionInput', _onLocomotionInput);
       s.once('close', () => {
@@ -69,9 +81,11 @@ async function start({
 
         qrEmitter.removeListener('qrCode', _onQrCode);
         locomotionEmitter.removeListener('locomotionInput', _onLocomotionInput);
-        
-        engine.setSceneAppLocomotionEnabled(true);
-        engine.setChaperoneTransform(null);
+
+        if (authed) {
+          engine.setSceneAppLocomotionEnabled(true);
+          engine.setChaperoneTransform(null);
+        }
       });
     } else {
       s.close();
