@@ -11,17 +11,19 @@ async function start({
 } = {}) {
   let initialized = false;
   let live = false;
+  let qrEmitter = null;
+  let locomotionEmitter = null;
   const presenceWss = new ws.Server({
     noServer: true,
   });
   presenceWss.on('connection', (s, req) => {
     if (!initialized) {
       engine.initVr();
-      const qrEmitter = new EventEmitter();
+      qrEmitter = new EventEmitter();
       engine.createQrEngine(qrCode => {
         qrEmitter.emit('qrCode', qrCode);
       });
-      const locomotionEmitter = new EventEmitter();
+      locomotionEmitter = new EventEmitter();
       engine.createLocomotionEngine(locomotionInput => {
         locomotionEmitter.emit('locomotionInput', locomotionInput);
       });
