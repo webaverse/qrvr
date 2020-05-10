@@ -9,26 +9,30 @@ async function start({
   port = 8000,
   key,
 } = {}) {
-  engine.initVr();
-  const qrEmitter = new EventEmitter();
-  engine.createQrEngine(qrCode => {
-    qrEmitter.emit('qrCode', qrCode);
-  });
-  const locomotionEmitter = new EventEmitter();
-  engine.createLocomotionEngine(locomotionInput => {
-    locomotionEmitter.emit('locomotionInput', locomotionInput);
-  });
-  engine.startThread();
-
+  let initialized = false;
+  let live = false;
   const presenceWss = new ws.Server({
     noServer: true,
   });
-  let live = false;
-  let authed = typeof key !== 'string';
   presenceWss.on('connection', (s, req) => {
+    if (!initialized) {
+      engine.initVr();
+      const qrEmitter = new EventEmitter();
+      engine.createQrEngine(qrCode => {
+        qrEmitter.emit('qrCode', qrCode);
+      });
+      const locomotionEmitter = new EventEmitter();
+      engine.createLocomotionEngine(locomotionInput => {
+        locomotionEmitter.emit('locomotionInput', locomotionInput);
+      });
+      engine.startThread();
+
+      initialized = true;
+    }
     if (!live) {
       live = true;
-      
+
+      let authed = typeof key !== 'string';
       s.on('message', s => {
         const j = JSON.parse(s);
         const {method} = j;
