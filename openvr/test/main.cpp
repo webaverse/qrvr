@@ -7,6 +7,9 @@ using namespace v8;
 NAN_METHOD(initVr) {
   vr::HmdError hmdError;
   vr::VR_Init(&hmdError, vr::EVRApplicationType::VRApplication_Overlay);
+
+  // Return HmdError code https://github.com/ValveSoftware/openvr/wiki/HmdError
+  info.GetReturnValue().Set(hmdError);
 }
 
 std::unique_ptr<QrEngine> qrEngine;

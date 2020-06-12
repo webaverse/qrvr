@@ -18,7 +18,18 @@ async function start({
   });
   presenceWss.on('connection', (s, req) => {
     if (!initialized) {
-      engine.initVr();
+      const resultCode = engine.initVr();
+
+      // Don't continue if there was an error initializing OpenVR
+      // See https://github.com/ValveSoftware/openvr/wiki/HmdError for error codes
+      if (resultCode === 100) {
+        console.error('OpenVR Installation not found', resultCode);
+        return process.exit(resultCode);
+      } else if (resultCode !== 0) {
+        console.error('Error initialising OpenVR', resultCode);
+        return process.exit(resultCode);
+      }
+
       qrEmitter = new EventEmitter();
       engine.createQrEngine(qrCode => {
         qrEmitter.emit('qrCode', qrCode);
