@@ -10,13 +10,13 @@ npm install qrvr
 
 ```
 const qrvr = require('qrvr');
-const exitCode = qrvr.start().then(s => {
-  console.log('started', s);
-});
-
-if (exitCode !== 0) {
-  // Handle exit code, as per https://github.com/ValveSoftware/openvr/wiki/HmdError
-}
+qrvr.start().then(
+  s => console.log('started', s),
+  errorCode => {
+    // Handle error code, as per https://github.com/ValveSoftware/openvr/wiki/HmdError
+    console.log(errorCode);
+  }
+);
 ```
 
 <img width="958" alt="card" src="https://user-images.githubusercontent.com/6926057/80404207-d516db80-888e-11ea-8373-7fd9d819fbed.PNG">
@@ -40,7 +40,7 @@ This will produce the final binary `qr.node` inside the `./build/Release` direct
 
 ## Errors
 
-qrvr requires [OpenVR](https://github.com/ValveSoftware/openvr), which may fail initialisation. If it does, running `qrvr.start()` will return an non-0 exit code from https://github.com/ValveSoftware/openvr/wiki/HmdError. The most common ones are likely:
+qrvr requires [OpenVR](https://github.com/ValveSoftware/openvr), which may fail initialisation. If it does, running `qrvr.start()` will reject with a non-0 exit code from https://github.com/ValveSoftware/openvr/wiki/HmdError. The most common ones are likely:
 
 - `HmdError_Unknown`: 1
 - `HmdError_Init_InstallationNotFound`: 100

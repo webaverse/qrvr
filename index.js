@@ -1,54 +1,52 @@
 const http = require('http');
 const events = require('events');
-const {EventEmitter} = events;
+const { EventEmitter } = events;
 const express = require('express');
 const ws = require('ws');
 const engine = require('./build/Release/qr.node');
+
+async function initQr(qrEmitter, locomotionEmitter) {
+  return new Promise((resolve, reject) => {
+    const resultCode = engine.initVr();
+
+    // Reject if there was an error initializing OpenVR
+    // See https://github.com/ValveSoftware/openvr/wiki/HmdError for error codes
+    if (resultCode !== 0) {
+      console.error(resultCode === 100 ? 'OpenVR Installation not found' : 'Error initialising OpenVR', resultCode);
+      reject(resultCode);
+      return;
+    }
+
+    engine.createQrEngine(qrCode => qrEmitter.emit('qrCode', qrCode));
+
+    engine.createLocomotionEngine(locomotionInput =>
+      locomotionEmitter.emit('locomotionInput', locomotionInput)
+    );
+    engine.startThread();
+    resolve();
+  });
+}
 
 async function start({
   port = 8000,
   key,
 } = {}) {
-  let initialized = false;
   let live = false;
-  let qrEmitter = null;
-  let locomotionEmitter = null;
+  let qrEmitter = new EventEmitter();
+  let locomotionEmitter = new EventEmitter();
+
   const presenceWss = new ws.Server({
     noServer: true,
   });
+
   presenceWss.on('connection', (s, req) => {
-    if (!initialized) {
-      const resultCode = engine.initVr();
-
-      // Don't continue if there was an error initializing OpenVR
-      // See https://github.com/ValveSoftware/openvr/wiki/HmdError for error codes
-      if (resultCode === 100) {
-        console.error('OpenVR Installation not found', resultCode);
-        return process.exit(resultCode);
-      } else if (resultCode !== 0) {
-        console.error('Error initialising OpenVR', resultCode);
-        return process.exit(resultCode);
-      }
-
-      qrEmitter = new EventEmitter();
-      engine.createQrEngine(qrCode => {
-        qrEmitter.emit('qrCode', qrCode);
-      });
-      locomotionEmitter = new EventEmitter();
-      engine.createLocomotionEngine(locomotionInput => {
-        locomotionEmitter.emit('locomotionInput', locomotionInput);
-      });
-      engine.startThread();
-
-      initialized = true;
-    }
     if (!live) {
       live = true;
 
       let authed = typeof key !== 'string';
       s.on('message', s => {
         const j = JSON.parse(s);
-        const {method} = j;
+        const { method } = j;
         switch (method) {
           case 'init': {
             if (!authed) {
@@ -57,12 +55,12 @@ async function start({
             break;
           }
           case 'setSceneAppLocomotionEnabled': {
-            const {data} = j;
+            const { data } = j;
             engine.setSceneAppLocomotionEnabled(data);
             break;
           }
           case 'setChaperoneTransform': {
-            let {data} = j;
+            let { data } = j;
             if (data) {
               data = Float32Array.from(data);
             }
@@ -75,6 +73,7 @@ async function start({
           }
         }
       });
+
       const _onQrCode = qrCode => {
         if (authed) {
           s.send(JSON.stringify({
@@ -84,6 +83,7 @@ async function start({
         }
       };
       qrEmitter.on('qrCode', _onQrCode);
+
       const _onLocomotionInput = locomotionInput => {
         if (authed) {
           s.send(JSON.stringify({
@@ -93,6 +93,7 @@ async function start({
         }
       };
       locomotionEmitter.on('locomotionInput', _onLocomotionInput);
+
       s.once('close', () => {
         live = false;
 
@@ -108,21 +109,25 @@ async function start({
       s.close();
     }
   });
+
   const app = express();
   app.use(express.static(__dirname));
+
   const server = http.createServer(app);
   server.on('upgrade', (req, socket, head) => {
     presenceWss.handleUpgrade(req, socket, head, s => {
       presenceWss.emit('connection', s, req);
     });
   });
+
   return new Promise((accept, reject) => {
     server.listen(port, err => {
-      if (!err) {
-        accept(`http://127.0.0.1:${port}/`);
-      } else {
-        reject(err);
-      }
+      if (err) return reject(err);
+
+      initQr(qrEmitter, locomotionEmitter).then(
+        () => accept(`http://127.0.0.1:${port}/`),
+        error => reject(error)
+      );
     });
   });
 };
