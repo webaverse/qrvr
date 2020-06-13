@@ -6,25 +6,22 @@ const ws = require('ws');
 const engine = require('./build/Release/qr.node');
 
 async function initQr(qrEmitter, locomotionEmitter) {
-  return new Promise((resolve, reject) => {
-    const resultCode = engine.initVr();
+  const resultCode = engine.initVr();
 
-    // Reject if there was an error initializing OpenVR
-    // See https://github.com/ValveSoftware/openvr/wiki/HmdError for error codes
-    if (resultCode !== 0) {
-      console.error(resultCode === 100 ? 'OpenVR Installation not found' : 'Error initialising OpenVR', resultCode);
-      reject(resultCode);
-      return;
-    }
+  // Reject if there was an error initializing OpenVR
+  // See https://github.com/ValveSoftware/openvr/wiki/HmdError for error codes
+  if (resultCode !== 0) {
+    console.error(resultCode === 100 ? 'OpenVR Installation not found' : 'Error initialising OpenVR', resultCode);
+    throw resultCode;
+  }
 
-    engine.createQrEngine(qrCode => qrEmitter.emit('qrCode', qrCode));
+  engine.createQrEngine(qrCode => qrEmitter.emit('qrCode', qrCode));
 
-    engine.createLocomotionEngine(locomotionInput =>
-      locomotionEmitter.emit('locomotionInput', locomotionInput)
-    );
-    engine.startThread();
-    resolve();
-  });
+  engine.createLocomotionEngine(locomotionInput =>
+    locomotionEmitter.emit('locomotionInput', locomotionInput)
+  );
+  engine.startThread();
+  return 0;
 }
 
 async function start({
