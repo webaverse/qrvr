@@ -5,32 +5,38 @@ const express = require('express');
 const ws = require('ws');
 const engine = require('./build/Release/qr.node');
 
+async function initQr(qrEmitter, locomotionEmitter) {
+  const resultCode = engine.initVr();
+
+  // Reject if there was an error initializing OpenVR
+  // See https://github.com/ValveSoftware/openvr/wiki/HmdError for error codes
+  if (resultCode !== 0) {
+    console.error(resultCode === 100 ? 'OpenVR Installation not found' : 'Error initialising OpenVR', resultCode);
+    throw resultCode;
+  }
+
+  engine.createQrEngine(qrCode => qrEmitter.emit('qrCode', qrCode));
+
+  engine.createLocomotionEngine(locomotionInput =>
+    locomotionEmitter.emit('locomotionInput', locomotionInput)
+  );
+  engine.startThread();
+  return 0;
+}
+
 async function start({
   port = 8000,
   key,
 } = {}) {
-  let initialized = false;
   let live = false;
-  let qrEmitter = null;
-  let locomotionEmitter = null;
+  let qrEmitter = new EventEmitter();
+  let locomotionEmitter = new EventEmitter();
+
   const presenceWss = new ws.Server({
     noServer: true,
   });
-  presenceWss.on('connection', (s, req) => {
-    if (!initialized) {
-      engine.initVr();
-      qrEmitter = new EventEmitter();
-      engine.createQrEngine(qrCode => {
-        qrEmitter.emit('qrCode', qrCode);
-      });
-      locomotionEmitter = new EventEmitter();
-      engine.createLocomotionEngine(locomotionInput => {
-        locomotionEmitter.emit('locomotionInput', locomotionInput);
-      });
-      engine.startThread();
 
-      initialized = true;
-    }
+  presenceWss.on('connection', (s, req) => {
     if (!live) {
       live = true;
 
@@ -107,11 +113,12 @@ async function start({
   });
   return new Promise((accept, reject) => {
     server.listen(port, err => {
-      if (!err) {
-        accept(`http://127.0.0.1:${port}/`);
-      } else {
-        reject(err);
-      }
+      if (err) return reject(err);
+
+      initQr(qrEmitter, locomotionEmitter).then(
+        () => accept(`http://127.0.0.1:${port}/`),
+        error => reject(error)
+      );
     });
   });
 };
