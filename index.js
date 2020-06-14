@@ -1,6 +1,6 @@
 const http = require('http');
 const events = require('events');
-const { EventEmitter } = events;
+const {EventEmitter} = events;
 const express = require('express');
 const ws = require('ws');
 const engine = require('./build/Release/qr.node');
@@ -43,7 +43,7 @@ async function start({
       let authed = typeof key !== 'string';
       s.on('message', s => {
         const j = JSON.parse(s);
-        const { method } = j;
+        const {method} = j;
         switch (method) {
           case 'init': {
             if (!authed) {
@@ -52,12 +52,12 @@ async function start({
             break;
           }
           case 'setSceneAppLocomotionEnabled': {
-            const { data } = j;
+            const {data} = j;
             engine.setSceneAppLocomotionEnabled(data);
             break;
           }
           case 'setChaperoneTransform': {
-            let { data } = j;
+            let {data} = j;
             if (data) {
               data = Float32Array.from(data);
             }
@@ -70,7 +70,6 @@ async function start({
           }
         }
       });
-
       const _onQrCode = qrCode => {
         if (authed) {
           s.send(JSON.stringify({
@@ -80,7 +79,6 @@ async function start({
         }
       };
       qrEmitter.on('qrCode', _onQrCode);
-
       const _onLocomotionInput = locomotionInput => {
         if (authed) {
           s.send(JSON.stringify({
@@ -90,7 +88,6 @@ async function start({
         }
       };
       locomotionEmitter.on('locomotionInput', _onLocomotionInput);
-
       s.once('close', () => {
         live = false;
 
@@ -106,17 +103,14 @@ async function start({
       s.close();
     }
   });
-
   const app = express();
   app.use(express.static(__dirname));
-
   const server = http.createServer(app);
   server.on('upgrade', (req, socket, head) => {
     presenceWss.handleUpgrade(req, socket, head, s => {
       presenceWss.emit('connection', s, req);
     });
   });
-
   return new Promise((accept, reject) => {
     server.listen(port, err => {
       if (err) return reject(err);
